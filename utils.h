@@ -22,6 +22,14 @@ double l2norm(vector<double> p1, vector<double> p2) {
     return sqrt(squared_sum);
 };
 
+double l2norm(double* p1, double* p2, int size) {
+    double squared_sum = 0;
+    for (int i=0; i < size; i++){
+        squared_sum += pow(p1[i] - p2[i], 2);
+    };
+    return sqrt(squared_sum);
+};
+
 double l1norm(Point* p1, Point* p2) {
     double norm_value = 0;
     for (int i=0; i < p1->size(); i++){
