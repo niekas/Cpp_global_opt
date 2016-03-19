@@ -430,9 +430,15 @@ public:
             double slope = (big_f_val - double(f_val))/(big_diam - diam);
             double bias = f_val - slope * diam;
 
-            if ((f_min - bias) < 0.0001) {
+            // if ((f_min - bias) < 0.0001) {
+            //     selected[i]->_should_be_divided = false;
+            // };
+
+            if (slope <= Simplex::glob_Ls[0]) {
                 selected[i]->_should_be_divided = false;
             };
+
+
         };
 
 
