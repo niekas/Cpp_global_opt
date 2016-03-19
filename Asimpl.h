@@ -434,7 +434,7 @@ public:
             //     selected[i]->_should_be_divided = false;
             // };
 
-            if (slope <= Simplex::glob_Ls[0]) {
+            if (slope <= selected[i]->_grad_norms[0]) {
                 selected[i]->_should_be_divided = false;
             };
 
@@ -815,7 +815,7 @@ public:
             //         cout << "(" << simplexes_to_divide[i]->_diameter << ", " << simplexes_to_divide[i]->_tolerance<< "), ";
             //     };
             //     cout << endl;
-            // }
+            // };
 
             // Divide seletected simplexes
             vector<Simplex*> new_simplexes = divide_simplexes(simplexes_to_divide);
