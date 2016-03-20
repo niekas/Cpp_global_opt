@@ -29,6 +29,15 @@ public:
         _stop_criteria = "x_dist_Serg";     // Stopping criteria name
         _iteration = 0;                     // Algorithm iteration for debuging purposes
 
+        _iu = 0;
+        _ig = 0;
+        _phase = 'u';
+        _one_u = false;
+
+        _alpha = 0.25;
+        _iu_max = 10;
+        _ig_max = 10;
+
         // Clean partition log file
         ofstream log_file; 
         log_file.open("log/partition.txt");
@@ -38,6 +47,16 @@ public:
     };
 
     int _iteration;
+    double _f_min_prev;
+
+    int _iu;
+    int _ig;
+    char _phase;
+
+    double _alpha;
+    int _iu_max;
+    int _ig_max;
+    bool _one_u;
 
     void partition_feasable_region_combinatoricly() {
         int n = _funcs[0]->_D;
@@ -155,186 +174,22 @@ public:
         return v - 1;
     };
 
-    // Note: first implement simple Disimpl-V and check results. Then compare with improved algorithm.
-
-    // vector<Simplex*> select_simplexes_by_min_vert_and_diameter_convex_hull() {  // Selects simplices, which are potential with L, bigger than Simplex::glob_L
-    //     vector<Simplex*> selected_simplexes;                                    // Simplex::glob_Ls[0]
-    //
-    //     // Sort simplexes by their diameter
-    //     sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
-    //     vector<Simplex*> sorted_partition = _partition;
-    //
-    //     double f_min = _funcs[0]->_f_min;    // Initial value
-    //
-    //     // Find simplex with  minimum metric  and  unique diameters
-    //     Simplex* min_metric_simplex = sorted_partition[0];  // Initial value
-    //     vector<double> diameters;
-    //     vector<Simplex*> best_for_size;
-    //
-    //     bool unique_diameter;
-    //     bool found_with_same_size;
-    //     for (int i=0; i < sorted_partition.size(); i++) {
-    //         if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
-    //             min_metric_simplex = sorted_partition[i];
-    //         };
-    //         // Saves unique diameters
-    //         unique_diameter = true;
-    //         for (int j=0; j < diameters.size(); j++) {
-    //             if (diameters[j] == sorted_partition[i]->_diameter) {
-    //                 unique_diameter = false; break;
-    //             };
-    //         };
-    //         if (unique_diameter) {
-    //             diameters.push_back(sorted_partition[i]->_diameter);
-    //         };
-    //
-    //         // If this simplex is better then previous with same size swap them.
-    //         found_with_same_size = false;
-    //         for (int j=0; j < best_for_size.size(); j++) {
-    //             if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
-    //                 found_with_same_size = true;
-    //                 if (best_for_size[j]->_tolerance > sorted_partition[i]->_tolerance) {
-    //                     best_for_size.erase(best_for_size.begin()+j);
-    //                     best_for_size.push_back(sorted_partition[i]);
-    //                 };
-    //             };
-    //         };
-    //         if (!found_with_same_size) {
-    //             best_for_size.push_back(sorted_partition[i]);
-    //         };
-    //     };
-    //
-    //     vector<Simplex*> selected;
-    //     if (min_metric_simplex == best_for_size[best_for_size.size()-1]) {    // Biggest simplex has lowest function value
-    //         selected.push_back(min_metric_simplex);
-    //     } else {
-    //         // Is this OK?  Well compared with examples - its ok.
-    //         if ((best_for_size.size() > 2) && (min_metric_simplex != best_for_size[best_for_size.size()-1])) {
-    //             vector<Simplex*> simplexes_below_line;
-    //             // double a1 = best_for_size[0]->_diameter;
-    //             // double b1 = best_for_size[0]->_tolerance;
-    //             double a1 = min_metric_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
-    //             double b1 = min_metric_simplex->_tolerance;
-    //             double a2 = best_for_size[best_for_size.size()-1]->_diameter;
-    //             double b2 = best_for_size[best_for_size.size()-1]->_tolerance;
-    //
-    //             double slope = (b2 - b1)/(a2 - a1);
-    //             double bias = b1 - slope * a1;
-    //
-    //             for (int i=0; i < best_for_size.size(); i++) {
-    //                 if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
-    //                     simplexes_below_line.push_back(best_for_size[i]);
-    //                 };
-    //             };
-    //             selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
-    //         } else {
-    //             selected.push_back(min_metric_simplex);
-    //             // selected = best_for_size;    // TODO: Why we divide all of them? Could divide only min_metrc_simplex.
-    //                                             // Because practiacally this case does not occur ever.
-    //         };
-    //     };
-    //
-    //     for (int i=0; i < selected.size(); i++) {
-    //         selected[i]->_should_be_divided = true;
-    //     };
-    //
-    //     //// Should check all criterias, not only first
-    //     // This part is very irational, because tolerance line and f_min point
-    //     // are compared.
-    //     //
-    //     // Should f1, f2 lines be constructed, but in this case lbm should
-    //     // known.
-    //     //
-    //     // Should use min_lbs values instead of tolerance.
-    //     //
-    //     // 
-    //
-    //
-    //
-    //
-    //     // Remove simplexes which do not satisfy condition:   f - slope*d > f_min - epsilon*abs(f_min)
-    //     for (int i=0; i < (signed) selected.size() -1; i++) {  // I gess error here - bias is incorrect
-    //         //// Version2: All functions should be improved
-    //         // int improvable = 0;
-    //         // for (int j; j < _funcs.size(); j++) {
-    //         //     if (selected[i]->_min_lbs[j]->_values[0] < _funcs[j]->_f_min - 0.0001 * fabs(_funcs[j]->_f_min)) {
-    //         //         improvable += 1;
-    //         //     };
-    //         // };
-    //         // if (improvable == 0) {
-    //         //     selected[i]->_should_be_divided = false;
-    //         // };
-    //
-    //         //// Version3: Too small simplexes should not be divided (but tolerance should ensure this)
-    //         // if (selected[i]->_diameter < 1e-5) {
-    //         //     selected[i]->_should_be_divided = false;
-    //         // };
-    //
-    //         //// Version4: tolerance should ensure this.
-    //
-    //         //// VersionOriginal: for single criteria
-    //         // double a1 = selected[selected.size() - i -1]->_diameter;
-    //         // double b1 = selected[selected.size() - i -1]->_tolerance;
-    //         // double a2 = selected[selected.size() - i -2]->_diameter;
-    //         // double b2 = selected[selected.size() - i -2]->_tolerance;
-    //         // double slope = (b2 - double(b1))/(a2 - a1);
-    //         // double bias = b1 - slope * a1;
-    //         // // cout << "slope = (b2 - double(b1))/(a2 - a1);   bias = b1 - slope * a1;" << endl;
-    //         // // cout << "b-remove if    bias > f_min - 0.0001*fabs(f_min)" << endl;
-    //         // // cout << "a1 " << a1 << " b1 " << b1 << " a2 " << a2 << " b2 " << b2 << endl;
-    //         // // cout << "slope " << slope << " bias " << bias << endl;
-    //         // // cout << "bias: " << bias << " fmin " << f_min << endl;
-    //         // // cout << endl;
-    //         //
-    //         // if (bias > f_min - 0.0001*fabs(f_min)) {   // epsilon
-    //         //     selected[selected.size() - i -2]->_should_be_divided = false;
-    //         // };
-    //     };
-    //
-    //
-    //
-    //     // Remove simplexes which should not be divided
-    //     selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
-    //
-    //     // Select all simplexes which have best _tolerance for its size 
-    //     for (int i=0; i < sorted_partition.size(); i++) {
-    //         for (int j=0; j < selected.size(); j++) {
-    //             if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
-    //                 (sorted_partition[i]->_tolerance == selected[j]->_tolerance)) {
-    //                 selected_simplexes.push_back(sorted_partition[i]);
-    //             };
-    //         };
-    //     };
-    //
-    //     return selected_simplexes;
-    // };
-
     vector<Simplex*> select_simplexes_by_lb_estimate_and_diameter_convex_hull() {
         vector<Simplex*> selected_simplexes;
 
         // Sort simplexes by their diameter
-        vector<Simplex*> sorted_partition = _partition;   // Note: Could sort globally, resorting would take less time
+        vector<Simplex*> sorted_partition = _partition;
 
-        // Simplex::print(sorted_partition, "Selecting for division from: ");
         double f_min = _funcs[0]->_f_min;
 
         // Find simplex with  minimum metric  and  unique diameters
-        Simplex* min_metric_simplex = sorted_partition[0]; // Initial value
         vector<double> diameters;
         vector<Simplex*> best_for_size;
 
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
-            if (sorted_partition[i]->_min_lb_value <= min_metric_simplex->_min_lb_value) {
-                if (sorted_partition[i]->_min_lb_value == min_metric_simplex->_min_lb_value) {
-                    if (sorted_partition[i]->_diameter < min_metric_simplex->_diameter) {
-                        min_metric_simplex = sorted_partition[i];
-                    };
-                } else {
-                    min_metric_simplex = sorted_partition[i];
-                };
-            };
+
             // Saves unique diameters
             unique_diameter = true;
             for (int j=0; j < diameters.size(); j++) {
@@ -359,6 +214,37 @@ public:
             };
             if (!found_with_same_size) {
                 best_for_size.push_back(sorted_partition[i]);
+            };
+        };
+
+        // If global phase remove part of convex hull here.
+        int groups_count = best_for_size.size();
+        int glob_groups_count = floor(groups_count * _alpha);
+
+        vector<Simplex*> glob_best_for_size;
+        if (_phase == 'g') {
+            if (_one_u == false) {
+                for (int i=0; i < glob_groups_count; i++) {
+                    glob_best_for_size.push_back(best_for_size[groups_count - glob_groups_count + i]);
+                };
+                // Reduce best_for_size to glob_groups_count
+                best_for_size = glob_best_for_size;
+            } else {
+                _one_u = false;
+            };
+        };
+
+        // Find min_metric_simplex here
+        Simplex* min_metric_simplex = best_for_size[0]; // Initial value
+        for (int i=0; i < best_for_size.size(); i++) {
+            if (best_for_size[i]->_min_lb_value <= min_metric_simplex->_min_lb_value) {
+                if (best_for_size[i]->_min_lb_value == min_metric_simplex->_min_lb_value) {
+                    if (best_for_size[i]->_diameter < min_metric_simplex->_diameter) {
+                        min_metric_simplex = best_for_size[i];
+                    };
+                } else {
+                    min_metric_simplex = best_for_size[i];
+                };
             };
         };
 
@@ -430,13 +316,15 @@ public:
             double slope = (big_f_val - double(f_val))/(big_diam - diam);
             double bias = f_val - slope * diam;
 
-            // if ((f_min - bias) < 0.0001) {
-            //     selected[i]->_should_be_divided = false;
-            // };
-
-            if (slope <= Simplex::glob_Ls[0]) {
+            if ((f_min - bias) < 0.0001) {
                 selected[i]->_should_be_divided = false;
             };
+
+            // Note: should globaly store simplices groups by size for performance
+
+            // if (slope <= Simplex::glob_Ls[0]) {
+            //     selected[i]->_should_be_divided = false;
+            // };
 
 
         };
@@ -457,159 +345,6 @@ public:
 
         return selected_simplexes;
     };
-
-
-    // vector<Simplex*> select_simplexes_by_lb_estimate_and_diameter_convex_hull() {   // Selects from best
-    //     vector<Simplex*> selected_simplexes;
-    //
-    //     // Sort simplexes by their diameter
-    //     vector<Simplex*> sorted_partition = _partition;   // Note: Could sort globally, resorting would take less time
-    //
-    //     // Simplex::print(sorted_partition, "Selecting for division from: ");
-    //     sort(sorted_partition.begin(), sorted_partition.end(), Simplex::ascending_diameter);
-    //     double f_min = _funcs[0]->_f_min;
-    //
-    //     // Find simplex with  minimum metric  and  unique diameters
-    //     Simplex* min_metric_simplex = sorted_partition[0];  // Initial value
-    //     vector<double> diameters;
-    //     vector<Simplex*> best_for_size;
-    //
-    //     bool unique_diameter;
-    //     bool found_with_same_size;
-    //     for (int i=0; i < sorted_partition.size(); i++) {
-    //         if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
-    //             min_metric_simplex = sorted_partition[i];
-    //         };
-    //         // Saves unique diameters
-    //         unique_diameter = true;
-    //         for (int j=0; j < diameters.size(); j++) {
-    //             if (diameters[j] == sorted_partition[i]->_diameter) {
-    //                 unique_diameter = false; break;
-    //             };
-    //         };
-    //         if (unique_diameter) {
-    //             diameters.push_back(sorted_partition[i]->_diameter);
-    //         };
-    //
-    //         // If this simplex is better then previous with same size swap them.
-    //         found_with_same_size = false;
-    //         for (int j=0; j < best_for_size.size(); j++) {
-    //             if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
-    //                 found_with_same_size = true;
-    //                 if (best_for_size[j]->_tolerance > sorted_partition[i]->_tolerance) {
-    //                     best_for_size.erase(best_for_size.begin()+j);
-    //                     best_for_size.push_back(sorted_partition[i]);
-    //                 };
-    //             };
-    //         };
-    //         if (!found_with_same_size) {
-    //             best_for_size.push_back(sorted_partition[i]);
-    //         };
-    //     };
-    //
-    //     vector<Simplex*> selected;
-    //     if (min_metric_simplex == best_for_size[best_for_size.size()-1]) {
-    //         selected.push_back(min_metric_simplex);
-    //     } else {
-    //         // Is this OK?  Well compared with examples - its ok.
-    //         if ((best_for_size.size() > 2) && (min_metric_simplex != best_for_size[best_for_size.size()-1])) {
-    //             vector<Simplex*> simplexes_below_line;
-    //             // double a1 = best_for_size[0]->_diameter;
-    //             // double b1 = best_for_size[0]->_tolerance;
-    //             double a1 = min_metric_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
-    //             double b1 = min_metric_simplex->_tolerance;
-    //             double a2 = best_for_size[best_for_size.size()-1]->_diameter;
-    //             double b2 = best_for_size[best_for_size.size()-1]->_tolerance;
-    //
-    //             double slope = (b2 - b1)/(a2 - a1);
-    //             double bias = b1 - slope * a1;
-    //
-    //             for (int i=0; i < best_for_size.size(); i++) {
-    //                 if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
-    //                     simplexes_below_line.push_back(best_for_size[i]);
-    //                 };
-    //             };
-    //             selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
-    //         } else {
-    //             selected = best_for_size;    // TODO: Why we divide all of them? Could divide only min_metrc_simplex.
-    //                                          // Because practiacally this case does not occur ever.
-    //         };
-    //     };
-    //
-    //     for (int i=0; i < selected.size(); i++) {
-    //         selected[i]->_should_be_divided = true;
-    //     };
-    //
-    //     //// Should check all criterias, not only first
-    //     // This part is very irational, because tolerance line and f_min point
-    //     // are compared.
-    //     //
-    //     // Should f1, f2 lines be constructed, but in this case lbm should
-    //     // known.
-    //     //
-    //     // Should use min_lbs values instead of tolerance.
-    //     //
-    //     // 
-    //
-    //
-    //
-    //
-    //     // Remove simplexes which do not satisfy condition:   f - slope*d > f_min - epsilon*abs(f_min)
-    //     for (int i=0; i < (signed) selected.size() -1; i++) {  // I gess error here - bias is incorrect
-    //         //// Version2: All functions should be improved
-    //         // int improvable = 0;
-    //         // for (int j; j < _funcs.size(); j++) {
-    //         //     if (selected[i]->_min_lbs[j]->_values[0] < _funcs[j]->_f_min - 0.0001 * fabs(_funcs[j]->_f_min)) {
-    //         //         improvable += 1;
-    //         //     };
-    //         // };
-    //         // if (improvable == 0) {
-    //         //     selected[i]->_should_be_divided = false;
-    //         // };
-    //
-    //         //// Version3: Too small simplexes should not be divided (but tolerance should ensure this)
-    //         // if (selected[i]->_diameter < 1e-5) {
-    //         //     selected[i]->_should_be_divided = false;
-    //         // };
-    //
-    //         //// Version4: tolerance should ensure this.
-    //
-    //         //// VersionOriginal: for single criteria
-    //         // double a1 = selected[selected.size() - i -1]->_diameter;
-    //         // double b1 = selected[selected.size() - i -1]->_tolerance;
-    //         // double a2 = selected[selected.size() - i -2]->_diameter;
-    //         // double b2 = selected[selected.size() - i -2]->_tolerance;
-    //         // double slope = (b2 - double(b1))/(a2 - a1);
-    //         // double bias = b1 - slope * a1;
-    //         // // cout << "slope = (b2 - double(b1))/(a2 - a1);   bias = b1 - slope * a1;" << endl;
-    //         // // cout << "b-remove if    bias > f_min - 0.0001*fabs(f_min)" << endl;
-    //         // // cout << "a1 " << a1 << " b1 " << b1 << " a2 " << a2 << " b2 " << b2 << endl;
-    //         // // cout << "slope " << slope << " bias " << bias << endl;
-    //         // // cout << "bias: " << bias << " fmin " << f_min << endl;
-    //         // // cout << endl;
-    //         //
-    //         // if (bias > f_min - 0.0001*fabs(f_min)) {   // epsilon
-    //         //     selected[selected.size() - i -2]->_should_be_divided = false;
-    //         // };
-    //     };
-    //
-    //
-    //
-    //     // Remove simplexes which should not be divided
-    //     selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
-    //
-    //     // Select all simplexes which have best _tolerance for its size 
-    //     for (int i=0; i < sorted_partition.size(); i++) {
-    //         for (int j=0; j < selected.size(); j++) {
-    //             if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
-    //                 (sorted_partition[i]->_tolerance == selected[j]->_tolerance)) {
-    //                 selected_simplexes.push_back(sorted_partition[i]);
-    //             };
-    //         };
-    //     };
-    //
-    //     return selected_simplexes;
-    // };
 
 
     virtual vector<Simplex*> select_simplexes_to_divide() {
@@ -799,7 +534,9 @@ public:
         Simplex::min_diameter = _partition[_partition.size()-1]->_diameter;
         // Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
 
-        while (_funcs[0]->_calls <= _max_calls && _duration <= _max_duration && !is_accurate_enough()) { // _func->pe() > _min_pe){
+        _f_min_prev = funcs[0]->_f_min;
+
+        while (_funcs[0]->_calls <= _max_calls && _duration <= _max_duration && !is_accurate_enough()) {   // Note: Should check after each f() evaluation
             // Selects simplexes to divide
             vector<Simplex*> simplexes_to_divide;
             if (_iteration == 0) {
@@ -855,6 +592,22 @@ public:
             Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::min_diameter = _partition[0]->_diameter;
             // Simplex::update_estimates(_partition, _funcs, _pareto_front, _iteration);
+
+
+            if (_funcs[0]->_f_min <= _f_min_prev - 0.01 * fabs(_f_min_prev)) {
+                _f_min_prev = _funcs[0]->_f_min;
+                if (_phase == 'u') { _iu = 0; } else { _ig = 0; };
+                _phase = 'u';
+            } else {
+                if (_phase == 'u') { _iu += 1; } else { _ig += 1; };
+            };
+            if ((_phase == 'u') and (_iu > _iu_max)) {
+                _phase = 'g';
+                _iu = 0;
+            } else if ((_phase == 'g') and (_ig % _ig_max == 0)) {
+                _one_u = true;
+            };
+            // bool _one_u;
 
             // Update counters and log the status
             _iteration += 1;
