@@ -34,7 +34,7 @@ public:
         _phase = 'u';
         _one_u = false;
 
-        _alpha = 0.25;
+        _alpha = 0.3;
         _iu_max = 10;
         _ig_max = 10;
 
