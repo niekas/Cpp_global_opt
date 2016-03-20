@@ -34,7 +34,7 @@ public:
         _phase = 'u';
         _one_u = false;
 
-        _alpha = 0.25;
+        // _alpha = 0.25;
         _iu_max = 10;
         _ig_max = 10;
 
@@ -53,7 +53,7 @@ public:
     int _ig;
     char _phase;
 
-    double _alpha;
+    // double _alpha;
     int _iu_max;
     int _ig_max;
     bool _one_u;
@@ -217,22 +217,22 @@ public:
             };
         };
 
-        // If global phase remove part of convex hull here.
-        int groups_count = best_for_size.size();
-        int glob_groups_count = floor(groups_count * _alpha);
-
-        vector<Simplex*> glob_best_for_size;
-        if (_phase == 'g') {
-            if (_one_u == false) {
-                for (int i=0; i < glob_groups_count; i++) {
-                    glob_best_for_size.push_back(best_for_size[groups_count - glob_groups_count + i]);
-                };
-                // Reduce best_for_size to glob_groups_count
-                best_for_size = glob_best_for_size;
-            } else {
-                _one_u = false;
-            };
-        };
+        // // If global phase remove part of convex hull here.
+        // int groups_count = best_for_size.size();
+        // int glob_groups_count = floor(groups_count * _alpha);
+        //
+        // vector<Simplex*> glob_best_for_size;
+        // if (_phase == 'g') {
+        //     if (_one_u == false) {
+        //         for (int i=0; i < glob_groups_count; i++) {
+        //             glob_best_for_size.push_back(best_for_size[groups_count - glob_groups_count + i]);
+        //         };
+        //         // Reduce best_for_size to glob_groups_count
+        //         best_for_size = glob_best_for_size;
+        //     } else {
+        //         _one_u = false;
+        //     };
+        // };
 
         // Find min_metric_simplex here
         Simplex* min_metric_simplex = best_for_size[0]; // Initial value
@@ -322,12 +322,18 @@ public:
 
             // Note: should globaly store simplices groups by size for performance
 
-            // if (slope <= Simplex::glob_Ls[0]) {
-            //     selected[i]->_should_be_divided = false;
-            // };
+            if (_phase == 'g') {
+                if (_one_u == false) {
+                    if (slope <= Simplex::glob_Ls[0]) {
+                        selected[i]->_should_be_divided = false;
+                    };
+                };
+            };
+
 
 
         };
+        _one_u = false;
 
 
         // Remove simplexes which should not be divided
