@@ -217,9 +217,13 @@ public:
             };
         };
 
+
         // If global phase remove part of convex hull here.
         int groups_count = best_for_size.size();
         int glob_groups_count = floor(groups_count * _alpha);
+        if (glob_groups_count == 0) {
+            glob_groups_count = 1;
+        };
 
         vector<Simplex*> glob_best_for_size;
         if (_phase == 'g') {
@@ -326,9 +330,6 @@ public:
                     selected[i]->_should_be_divided = false;
                 };
             };
-
-
-
         };
         _one_u = false;
 
@@ -548,7 +549,6 @@ public:
                 simplexes_to_divide = select_simplexes_to_divide();
             };
 
-            // if (_iteration == 200) {
             //     cout << "Selected simpls: " << _iteration << endl;
             //     for (int i=0; i < simplexes_to_divide.size(); i++) {
             //         // simplexes_to_divide[i]->print();
