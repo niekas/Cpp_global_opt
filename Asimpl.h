@@ -322,7 +322,7 @@ public:
 
             // Note: should globaly store simplices groups by size for performance
             if ((_phase == 'g') and (_one_u == false)) {
-                if (slope <= Simplex::glob_Ls[0]) {
+                if (slope <= selected[i]->_grad_norms[0]) {
                     selected[i]->_should_be_divided = false;
                 };
             };
