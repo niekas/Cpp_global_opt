@@ -385,8 +385,34 @@ public:
     };
 
 
+    // Select only best simplex
+    vector<Simplex*> select_simplexes_with_lowest_lb_estimate() {
+        double best_lb_value = numeric_limits<double>::max();
+        vector<Simplex*> selected;
+
+        for (int i=0; i < _partition.size(); i++) {
+            if (_partition[i]->_tolerance < best_lb_value) {
+                best_lb_value = _partition[i]->_tolerance;
+            };
+        };
+
+        for (int i=0; i < _partition.size(); i++) {
+            if (_partition[i]->_tolerance == best_lb_value) {
+                selected.push_back(_partition[i]);
+            };
+        };
+        return selected;
+    };
+
     virtual vector<Simplex*> select_simplexes_to_divide() {
-        vector<Simplex*> selected_simplexes = select_simplexes_by_lb_estimate_and_diameter_convex_hull();
+        vector<Simplex*> selected_simplexes;
+        if ((_iteration % 10) == 0) {
+            selected_simplexes = select_simplexes_by_lb_estimate_and_diameter_convex_hull();
+            cout << "    convex hull " << selected_simplexes.size() << endl;
+        } else {
+            selected_simplexes = select_simplexes_with_lowest_lb_estimate();
+            cout << "    only lowest " << selected_simplexes.size() << endl;
+        };
         return selected_simplexes;
     };
 
