@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 #include "gkls.h"
 #include "rnd_gen.h"
 
@@ -467,8 +468,10 @@ public:
         _calls = 0;
         _f_min = numeric_limits<int>::max();
         _points = new PointTree(); // new Points();
+        _stopping_criteria = "x_dist";
     };
     string _name;
+    string _stopping_criteria;
     int _D;
     Point* _lb;
     Point* _ub;
@@ -544,20 +547,41 @@ public:
         return point->_X[i] * (_ub->_X[i]-_lb->_X[i]) + _lb->_X[i];  
     };
 
-    double pe(){
-        if (_glob_f != 0) {
-            return (_f_min - _glob_f) / fabs(_glob_f) * 100.; 
-        };
-        return _f_min * 100.; 
+    double transform_back(Point* point, int i) {     // Transforms single point coordinate from [0,1] to [l,u]
+        return (point->_X[i] - _lb->_X[i]) / (_ub->_X[i]-_lb->_X[i]);
     };
 
-    bool is_accurate_enougth(){
-        for (int i=0; i<_D; i++) {
-            if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
-                return false;
+    // double pe(){
+    //     if (_glob_f != 0) {
+    //         return (_f_min - _glob_f) / fabs(_glob_f) * 100.;
+    //     };
+    //     return _f_min * 100.;
+    // };
+
+    bool is_accurate_enougth() {
+        double e;
+        if (_stopping_criteria == "x_dist") {
+            for (int i=0; i<_D; i++) {
+                if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
+                    return false;
+                };
             };
+            return true;
+        } else if (_stopping_criteria == "pe0.01") {
+            e = 0.01;
+        } else if (_stopping_criteria == "pe1") {
+            e = 1.0;
         };
-        return true; 
+        double pe;
+        if (_glob_f == 0) {
+            pe = 100 * _f_min;
+        } else {
+            pe = 100 * (_f_min - _glob_f) / fabs(_glob_f);
+        };
+        if (pe < e) {
+            return true;
+        };
+        return false;
     };
 
     virtual double value(Point* point) = 0;
@@ -573,12 +597,13 @@ class Branin : public Function {
     Branin(const Branin& other){};
     Branin& operator=(const Branin& other){};
 public:
-    Branin(): Function(){
+    Branin(string stopping_criteria="pe1"): Function(){
         _name = "Branin";
+        _stopping_criteria = stopping_criteria;
         _D = 2;
-        _lb = new Point(-5, 0);
-        _ub = new Point(10, 15);
-        _glob_x = new Point(M_PI, 12.275);  // Point where global function minimum is (should be list)
+        _lb = new Point(-5., 0.);
+        _ub = new Point(10., 15.);
+        _glob_x = new Point(-M_PI, 12.275);  // Point where global function minimum is (should be list)
         _glob_f = 0.397887;          // Predefined global function minimum
         _L = 109.94813585;
     };
@@ -586,38 +611,563 @@ public:
     double value(Point* point) {
         double x1 = transform(point, 0); 
         double x2 = transform(point, 1); 
-        double part1 = pow((x2 - 5./(4*pow(M_PI, 2))*pow(x1,2) + 5./M_PI*x1 -6), 2);
+        //// Original Branin function
+        double part1 = pow((x2 - 5.1/(4*pow(M_PI, 2))*pow(x1,2) + 5./M_PI*x1 -6.), 2);
+        //// Modification at Disimpl-V article
+        // double part1 = pow((x2 - 5./(4*pow(M_PI, 2))*pow(x1,2) + 5./M_PI*x1 -6.), 2);
         double part2 = 10.*(1. - 1./(8*M_PI))*cos(x1) + 10.;
         return part1 + part2;
     };
 };
 
-class RastriginShrinked: public Function {
-    RastriginShrinked(const RastriginShrinked& other){};
-    RastriginShrinked& operator=(const RastriginShrinked& other){};
+
+class GoldsteinPrice: public Function {   // http://www.sfu.ca/~ssurjano/goldpr.html
+    GoldsteinPrice(const GoldsteinPrice& other){};
+    GoldsteinPrice& operator=(const GoldsteinPrice& other){};
 public:
-    RastriginShrinked(): Function(){
-        _name = "RastriginShrinked";
+    GoldsteinPrice(string stopping_criteria="pe1"): Function(){
+        _name = "GoldsteinPrice";
+        _stopping_criteria = stopping_criteria;
         _D = 2;
-        _lb = new Point(-0.5, -0.5);
-        _ub = new Point(1.25, 1.25);
-        _glob_x = new Point(0., 0.);
-        _glob_f = 0;          
+        _lb = new Point(-2., -2.);
+        _ub = new Point(2., 2.);
+        _glob_x = new Point(0., -1.);  // Point where global function minimum is (should be list)
+        _glob_f = 3.;                 // Predefined global function minimum
+        _L = 2225891.74508;
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        double part1 = 1 + pow(x1 + x2 +1, 2) * (19 - 14*x1 + 3*pow(x1,2) - 14*x2 + 6*x1*x2 + 3*pow(x2,2));
+        double part2 = 30 + pow(2*x1 - 3*x2, 2) * (18 - 32*x1 + 12*pow(x1,2) + 48*x2 - 36*x1*x2 + 27*pow(x2,2));
+        return part1 * part2;
+    };
+};
+
+
+
+class SHCamel: public Function {   // http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=44040 http://www.sfu.ca/~ssurjano/camel6.html
+    SHCamel(const SHCamel& other){};
+    SHCamel& operator=(const SHCamel& other){};
+public:
+    SHCamel(string stopping_criteria="pe1"): Function(){
+        _name = "SHCamel";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-3., -2.);
+        _ub = new Point(3., 2.);
+        _glob_x = new Point(0.0898, -0.7126);  // Point where global function minimum is (should be list)
+        _glob_f = -1.0316;                 // Predefined global function minimum
+        _L = 689.202901909;
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        return (4 - 2.1*pow(x1, 2) + pow(x1, 4) / 3.) * pow(x1, 2) + x1*x2 + (-4 + 4*pow(x2, 2))*pow(x2, 2);
+    };
+};
+
+class Shubert: public Function {   // http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=44040 http://www.sfu.ca/~ssurjano/shubert.html
+    Shubert(const Shubert& other){};
+    Shubert& operator=(const Shubert& other){};
+public:
+    Shubert(string stopping_criteria="pe1"): Function(){
+        _name = "Shubert";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-10., -10.);
+        _ub = new Point(10., 10.);
+        _glob_x = new Point(4.85805, 5.4828);  // Point where global function minimum is (should be list)
+        _glob_f = -186.7309;                 // Predefined global function minimum
+        _L = 59.4020075361;
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+
+        double sum1 = 0;
+        double sum2 = 0;
+        for (int i=1; i < 6; i++) {
+            double new1 = i * cos((i+1)*x1 + i);
+            double new2 = i * cos((i+1)*x2 + i);
+            sum1 += new1;
+            sum2 += new2;
+        };
+        return sum1 * sum2;
+    };
+};
+
+
+
+class Alolyan: public Function {   // http://link.springer.com/article/10.1007%2Fs10898-012-0020-3
+    Alolyan(const Alolyan& other){};
+    Alolyan& operator=(const Alolyan& other){};
+public:
+    Alolyan(string stopping_criteria="pe1"): Function(){
+        _name = "Alolyan";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-1., -1.);
+        _ub = new Point(1., 1.);
+        _glob_x = new Point(-1/3., 1.);  // Point where global function minimum is (should be list)
+        _glob_f = -1.18519;                 // Predefined global function minimum
+        _L = 5.65685424949;
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        return x1*pow(x2, 2) + x2*pow(x1, 2) - pow(x1, 3) - pow(x2, 3);
+    };
+};
+
+class Easom: public Function {   // http://link.springer.com/article/10.1007%2Fs10898-012-0020-3
+    Easom(const Easom& other){};
+    Easom& operator=(const Easom& other){};
+public:
+    Easom(string stopping_criteria="pe1"): Function(){
+        _name = "Easom";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-30., -30.);
+        _ub = new Point(30., 30.);
+        _glob_x = new Point(M_PI, M_PI);  // Point where global function minimum is (should be list)
+        _glob_f = -1.0;                   // Predefined global function minimum
+        _L = 5.01891948878e-05;
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        return -cos(x1) * cos(x2) * pow(M_E, -(pow(x1 - M_PI, 2) + pow(x2 - M_PI, 2)));
+    };
+};
+
+class Rastrigin: public Function {   // http://link.springer.com/article/10.1007%2Fs10898-012-0020-3
+    Rastrigin(const Rastrigin& other){};
+    Rastrigin& operator=(const Rastrigin& other){};
+public:
+    Rastrigin(string stopping_criteria="pe1"): Function(){
+        _name = "Rastrigin";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-5., -5.);
+        _ub = new Point(6., 6.);
+        _glob_x = new Point(0., 0.);  // Point where global function minimum is (should be list)
+        _glob_f = 0.0;                   // Predefined global function minimum
         _L = 15.6204993518;
     };
 
     double value(Point* point) {
-        double x1 = transform(point, 0); 
-        double x2 = transform(point, 1); 
-        return 2*10 + 4*pow(x1,2) + 4*pow(x2,2) - 10*(cos(2*M_PI*x1) + cos(2*M_PI*x2));
-    };
-
-    virtual ~RastriginShrinked(){
-        delete _lb;
-        delete _ub;
-        delete _glob_x;
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        return 2*10. + pow(x1, 2) + pow(x2, 2) - 10*(cos(2*M_PI*x1) + cos(2*M_PI *x2));
     };
 };
+
+
+class Hartman3: public Function {   // http://www.sfu.ca/~ssurjano/hart3.html
+    Hartman3(const Hartman3& other){};
+    Hartman3& operator=(const Hartman3& other){};
+public:
+    Hartman3(string stopping_criteria="pe1"): Function(){
+        _name = "Hartman3";
+        _stopping_criteria = stopping_criteria;
+        _D = 3;
+        _lb = new Point(0., 3);
+        _ub = new Point(1., 3);
+        double X[3] = {0.114614, 0.555649, 0.852547};
+        _glob_x = new Point(X, 3);  // Point where global function minimum is (should be list)
+        _glob_f = -3.86278;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double alpha[4] = {1.0, 1.2, 3.0, 3.2};
+        double A[4][3] = {{3.0, 10, 30}, {0.1, 10, 35}, {3.0, 10, 30}, {0.1, 10, 35}};
+        double P[4][3] = {{0.3689, 0.1170, 0.2673},
+                          {0.4699, 0.4387, 0.7470},
+                          {0.1091, 0.8732, 0.5547},
+                          {0.0381, 0.5743, 0.8828}};
+        double sum1 = 0;
+        for (int i=0; i < 4; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 3; j++) {
+                sum2 += A[i][j] * pow(X[j] - P[i][j], 2);
+            };
+            sum1 += alpha[i] * exp(-sum2);
+        };
+        return -sum1;
+    };
+};
+
+
+
+
+class Shekel5: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html http://www-optima.amp.i.kyoto-u.ac.jp/member/student/hedar/Hedar_files/TestGO_files/Page2354.htm
+    Shekel5(const Shekel5& other){};
+    Shekel5& operator=(const Shekel5& other){};
+public:
+    Shekel5(string stopping_criteria="pe1"): Function(){
+        _name = "Shekel5";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(10., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.1532;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double m = 5;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+class ReducedShekel5: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html http://www-optima.amp.i.kyoto-u.ac.jp/member/student/hedar/Hedar_files/TestGO_files/Page2354.htm
+    ReducedShekel5(const ReducedShekel5& other){};
+    ReducedShekel5& operator=(const ReducedShekel5& other){};
+public:
+    ReducedShekel5(string stopping_criteria="pe1"): Function(){
+        _name = "ReducedShekel5";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(6., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.1532;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double m = 5;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+
+class Shekel7: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html
+    Shekel7(const Shekel7& other){};
+    Shekel7& operator=(const Shekel7& other){};
+public:
+    Shekel7(string stopping_criteria="pe1"): Function(){
+        _name = "Shekel7";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(10., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.4029;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double m = 7;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+class ReducedShekel7: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html
+    ReducedShekel7(const ReducedShekel7& other){};
+    ReducedShekel7& operator=(const ReducedShekel7& other){};
+public:
+    ReducedShekel7(string stopping_criteria="pe1"): Function(){
+        _name = "ReducedShekel7";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(6., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.4029;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double m = 7;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+
+class Shekel10: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html
+    Shekel10(const Shekel10& other){};
+    Shekel10& operator=(const Shekel10& other){};
+public:
+    Shekel10(string stopping_criteria="pe1"): Function(){
+        _name = "Shekel10";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(10., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.5364;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        int m = 10;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+class ReducedShekel10: public Function {   // http://www.sfu.ca/~ssurjano/shekel.html
+    ReducedShekel10(const ReducedShekel10& other){};
+    ReducedShekel10& operator=(const ReducedShekel10& other){};
+public:
+    ReducedShekel10(string stopping_criteria="pe1"): Function(){
+        _name = "ReducedShekel10";
+        _stopping_criteria = stopping_criteria;
+        _D = 4;
+        _lb = new Point(0., 4);
+        _ub = new Point(6., 4);
+        _glob_x = new Point(4., 4);  // Point where global function minimum is (should be list)
+        _glob_f = -10.5364;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        int m = 10;
+        double beta[10] = {0.1, 0.2, 0.2, 0.4, 0.4, 0.6, 0.3, 0.7, 0.5, 0.5};
+        double C[4][10] = {{4.,1.,8.,6.,3.,2.,5.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,5.,1.,2.,3.6},
+                           {4.,1.,8.,6.,3.,2.,3.,8.,6.,7.},
+                           {4.,1.,8.,6.,7.,9.,3.,1.,2.,3.6}};
+        double sum1 = 0;
+        for (int i=0; i < m; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 4; j++) {
+                sum2 += pow(X[j] - C[j][i], 2);
+            };
+            sum1 += 1./(sum2 + beta[i]);
+        };
+        return -sum1;
+    };
+};
+
+class Hartman6: public Function {   // http://www.sfu.ca/~ssurjano/hart6.html
+    Hartman6(const Hartman6& other){};
+    Hartman6& operator=(const Hartman6& other){};
+public:
+    Hartman6(string stopping_criteria="pe1"): Function(){
+        _name = "Hartman6";
+        _stopping_criteria = stopping_criteria;
+        _D = 6;
+        _lb = new Point(0., _D);
+        _ub = new Point(1., _D);
+        double X[6] = {0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573};
+        _glob_x = new Point(X, _D);  // Point where global function minimum is (should be list)
+        _glob_f = -3.322;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double X[_D];
+        for (int i=0; i < _D; i++) {
+            X[i] = transform(point, i);
+        };
+
+        double alpha[4] = {1.0, 1.2, 3.0, 3.2};
+        double A[4][10] = {{10, 3, 17, 3.5, 1.7, 8},
+                           {0.05, 10, 17, 0.1, 8, 14},
+                           {3.0, 3.5, 1.7, 10, 17, 8},
+                           {17, 8, 0.05, 10, 0.1, 14}};
+        double P[4][6] = {{0.1312, 0.1696, 0.5569, 0.0124, 0.8283, 0.5886},
+                          {0.2329, 0.4135, 0.8307, 0.3736, 0.1004, 0.9991},
+                          {0.2348, 0.1451, 0.3522, 0.2883, 0.3047, 0.6650},
+                          {0.4047, 0.8828, 0.8732, 0.5743, 0.1091, 0.0381}};
+        double sum1 = 0;
+        for (int i=0; i < 4; i++) {
+            double sum2 = 0;
+            for (int j=0; j < 6; j++) {
+                sum2 += A[i][j] * pow(X[j] - P[i][j], 2);
+            };
+            sum1 += alpha[i] * exp(-sum2);
+        };
+        return -sum1;
+    };
+};
+
+class JennrichSampson: public Function {   // http://infinity77.net/global_optimization/test_functions_nd_J.html
+    JennrichSampson(const JennrichSampson& other){};
+    JennrichSampson& operator=(const JennrichSampson& other){};
+public:
+    JennrichSampson(string stopping_criteria="pe1"): Function(){
+        _name = "JennrichSampson";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(0., 0.);
+        _ub = new Point(1., 1.);
+        _glob_x = new Point(0.257825, 0.257825);  // Point where global function minimum is (should be list)
+        _glob_f = 124.3621824;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        double sum1 = 0;
+        for (int i=1; i < 11; i++ ) {
+            sum1 += pow(2 + 2*i - (exp(i*x1) + exp(i*x2)), 2);
+        };
+        return sum1;
+    };
+};
+
+class CenteredJennrichSampson: public Function {   // http://infinity77.net/global_optimization/test_functions_nd_J.html
+    CenteredJennrichSampson(const CenteredJennrichSampson& other){};
+    CenteredJennrichSampson& operator=(const CenteredJennrichSampson& other){};
+public:
+    CenteredJennrichSampson(string stopping_criteria="pe1"): Function(){
+        _name = "CenteredJennrichSampson";
+        _stopping_criteria = stopping_criteria;
+        _D = 2;
+        _lb = new Point(-0.5, -0.5);
+        _ub = new Point(0.5, 0.5);
+        _glob_x = new Point(0.257825, 0.257825);  // Point where global function minimum is (should be list)
+        _glob_f = 124.3621824;                   // Predefined global function minimum
+    };
+
+    double value(Point* point) {
+        double x1 = transform(point, 0);
+        double x2 = transform(point, 1);
+        double sum1 = 0;
+        for (int i=1; i < 11; i++ ) {
+            sum1 += pow(2 + 2*i - (exp(i*x1) + exp(i*x2)), 2);
+        };
+        return sum1;
+    };
+};
+
+// def jennrich_sampson(X):
+//     x1, x2 = X
+
+
+
+// class RastriginShrinked: public Function {
+//     RastriginShrinked(const RastriginShrinked& other){};
+//     RastriginShrinked& operator=(const RastriginShrinked& other){};
+// public:
+//     RastriginShrinked(): Function(){
+//         _name = "RastriginShrinked";
+//         _D = 2;
+//         _lb = new Point(-0.5, -0.5);
+//         _ub = new Point(1.25, 1.25);
+//         _glob_x = new Point(0., 0.);
+//         _glob_f = 0;
+//         _L = 15.6204993518;
+//     };
+//
+//     double value(Point* point) {
+//         double x1 = transform(point, 0);
+//         double x2 = transform(point, 1);
+//         return 2*10 + 4*pow(x1,2) + 4*pow(x2,2) - 10*(cos(2*M_PI*x1) + cos(2*M_PI*x2));
+//     };
+//
+//     virtual ~RastriginShrinked(){
+//         delete _lb;
+//         delete _ub;
+//         delete _glob_x;
+//     };
+// };
 
 
 class GKLSFunction: public Function {
@@ -635,6 +1185,7 @@ public:
         _name =  function_name.str();
         _cls = cls;
         _fid = function_id;
+        _stopping_criteria = "x_dist";
 
         cls -= 1;
         _D = _GKLS_class_D[cls];
@@ -712,5 +1263,28 @@ public:
         };
     };
 };
+
+Function* get_function(char* func_name, string stopping_criteria="pe1"){
+    if (!strcmp(func_name, "branin")) { return new Branin(stopping_criteria); };
+    if (!strcmp(func_name, "goldsteinprice")) { return new GoldsteinPrice(stopping_criteria); };
+    if (!strcmp(func_name, "camel")) { return new SHCamel(stopping_criteria); };
+    if (!strcmp(func_name, "shubert")) { return new Shubert(stopping_criteria); };
+    if (!strcmp(func_name, "alolyan")) { return new Alolyan(stopping_criteria); };
+    if (!strcmp(func_name, "easom")) { return new Easom(stopping_criteria); };
+    if (!strcmp(func_name, "rastrigin")) { return new Rastrigin(stopping_criteria); };
+    if (!strcmp(func_name, "hartman3")) { return new Hartman3(stopping_criteria); };
+    if (!strcmp(func_name, "shekel5")) { return new Shekel5(stopping_criteria); };
+    if (!strcmp(func_name, "shekel7")) { return new Shekel7(stopping_criteria); };
+    if (!strcmp(func_name, "shekel10")) { return new Shekel10(stopping_criteria); };
+    if (!strcmp(func_name, "hartman6")) { return new Hartman6(stopping_criteria); };
+    if (!strcmp(func_name, "reducedshekel5")) { return new ReducedShekel5(stopping_criteria); };
+    if (!strcmp(func_name, "reducedshekel7")) { return new ReducedShekel7(stopping_criteria); };
+    if (!strcmp(func_name, "reducedshekel10")) { return new ReducedShekel10(stopping_criteria); };
+    if (!strcmp(func_name, "jennrichsampson")) { return new JennrichSampson(stopping_criteria); };
+    if (!strcmp(func_name, "centeredjennrichsampson")) { return new CenteredJennrichSampson(stopping_criteria); };
+};
+
+// vector<Function*> functions;
+// functions.push_back(Branin);
 
 #endif
