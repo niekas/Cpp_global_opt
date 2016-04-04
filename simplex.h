@@ -700,25 +700,29 @@ void Point::_neighbours_estimates_should_be_updated() {
 void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs, vector<Point*> pareto_front, int iteration) {   // Neighbours strategy - updates estimates
     for (int sid=0; sid < simpls.size(); sid++) {
         if (simpls[sid]->_should_estimates_be_updated or Simplex::glob_L_was_updated) {
-            //// Use simplex's \hat{L} as initial max_grad_norms value
-            // vector<double> max_grad_norms;
-            // for (int i=0; i < simpls[sid]->_grad_norms.size(); i++) {
-            //     max_grad_norms.push_back(simpls[sid]->_grad_norms[i]);
-            // };
-            //
-            //// Find max \hat{L} among neighbours
-            // for (list<Simplex*>::iterator it=simpls[sid]->_neighbours.begin(); it != simpls[sid]->_neighbours.end(); ++it) {
-            //     for (int i=0; i < funcs.size(); i++) {
-            //         if ((*it)->_grad_norms[i] > max_grad_norms[i]) {
-            //             max_grad_norms[i] = (*it)->_grad_norms[i];
-            //         };
-            //     };
-            // };
+            // Use simplex's \hat{L} as initial max_grad_norms value
+            vector<double> max_grad_norms;
+            for (int i=0; i < simpls[sid]->_grad_norms.size(); i++) {
+                max_grad_norms.push_back(simpls[sid]->_grad_norms[i]);
+            };
 
-            // Update simplex's L
+            // Find max \hat{L} among neighbours
+            for (list<Simplex*>::iterator it=simpls[sid]->_neighbours.begin(); it != simpls[sid]->_neighbours.end(); ++it) {
+                for (int i=0; i < funcs.size(); i++) {
+                    if ((*it)->_grad_norms[i] > max_grad_norms[i]) {
+                        max_grad_norms[i] = (*it)->_grad_norms[i];
+                    };
+                };
+            };
+
+            //// Update simplex's Ls by combining global Ls and local Ls
             for (int i=0; i < funcs.size(); i++) {
-                // simpls[sid]->_Ls[i] = max_grad_norms[i];
-                simpls[sid]->_Ls[i] = simpls[sid]->_grad_norms[i];
+                double reduced_glob_L = Simplex::glob_Ls[i] * (simpls[sid]->_diameter / Simplex::max_diameter);
+                if (reduced_glob_L > max_grad_norms[i]) {
+                    simpls[sid]->_Ls[i] = reduced_glob_L;
+                } else {
+                    simpls[sid]->_Ls[i] = max_grad_norms[i];
+                };
             };
 
             //// Find accurate lower bound point and value estimates with given precision
@@ -726,13 +730,14 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
                 delete simpls[sid]->_min_lbs[i];
             };
 
-            simpls[sid]->_min_lbs = simpls[sid]->find_accurate_lb_min_estimates(simpls[sid]->_verts, Simplex::glob_Ls);
+            simpls[sid]->_min_lbs = simpls[sid]->find_accurate_lb_min_estimates(simpls[sid]->_verts, simpls[sid]->_Ls);
 
-            simpls[sid]->_tolerance = simpls[sid]->_min_lbs[0]->_values[0];   // simpls[sid]->find_tolerance(pareto_front);
+            simpls[sid]->_tolerance = simpls[sid]->_min_lbs[0]->_values[0];  // simpls[sid]->find_tolerance(pareto_front);
 
             simpls[sid]->_should_estimates_be_updated = false;
         };
     };
+
     Simplex::glob_L_was_updated = false;
 
     // Note: gali būti, kad slope apibrėžimas pas mane netinkamas atmetant
