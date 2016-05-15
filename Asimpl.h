@@ -174,63 +174,86 @@ public:
     //     return selected_simplexes;                    
     // };
 
-    vector<Simplex*> convex_hull(vector<Simplex*> simplexes) {
-        int m = simplexes.size() - 1;
-        if (m <= 1) { return simplexes; };
-        int START = 0;
-        int v = START;
-        int w = m;
-        bool flag = false;
-        bool leftturn = false;
-        int a, b, c;
-        double det_val;
-        while ((nextv(v, m) != START) or (flag == false)) {
-            if (nextv(v, m) == w) {
-                flag = true;
-            }
-            a = v;
-            b = nextv(v, m);
-            c = nextv(nextv(v, m), m);   // d = x = _diameter;  f = y = _tolerance;
-
-            double* matrix[3];
-            double line1[3] = {simplexes[a]->_diameter, simplexes[a]->_tolerance, 1.};
-            double line2[3] = {simplexes[b]->_diameter, simplexes[b]->_tolerance, 1.};
-            double line3[3] = {simplexes[c]->_diameter, simplexes[c]->_tolerance, 1.};
-            matrix[0] = line1;
-            matrix[1] = line2;
-            matrix[2] = line3;
-            det_val = Determinant(matrix, 3);
-
-            if (det_val >= 0){
-                leftturn = 1;
-            } else {
-                leftturn = 0;
+    vector<Simplex*> stairs(vector<Simplex*> simpls) {
+        vector<Simplex*> selected;
+        bool found_better = false;
+        // cout << "Simpls: " << simpls.size() << endl;
+        for (int i=0; i < simpls.size(); i++) {
+            // cout << "    " << simpls[i]->_tolerance << ", " << simpls[i]->_diameter << endl;
+            found_better = false;
+            for (int j=0; j < simpls.size(); j++) {
+                if (((simpls[i]->_tolerance > simpls[j]->_tolerance) and (simpls[i]->_diameter <= simpls[j]->_diameter))) {
+                    found_better = true;
+                    // cout << "     better is: " << simpls[j]->_tolerance << ", " << simpls[i]->_tolerance << endl;
+                };
             };
-            if (leftturn) {
-                v = nextv(v, m);
-            } else {
-                simplexes.erase(simplexes.begin() + nextv(v, m));
-                m -= 1;
-                w -= 1;
-                v = predv(v, m);
+            if (!found_better) {
+                selected.push_back(simpls[i]);
             };
         };
-        return simplexes;
+
+        // cout << "    selected: " << selected.size() << endl;
+
+        return selected;
     };
 
-    int nextv(int v, int m) {
-        if (v == m) {
-            return 0;
-        };
-        return v + 1;
-    };
-
-    int predv(int v, int m) {
-        if (v == 0) {
-            return m;
-        };
-        return v - 1;
-    };
+    // vector<Simplex*> convex_hull(vector<Simplex*> simplexes) {
+    //     int m = simplexes.size() - 1;
+    //     if (m <= 1) { return simplexes; };
+    //     int START = 0;
+    //     int v = START;
+    //     int w = m;
+    //     bool flag = false;
+    //     bool leftturn = false;
+    //     int a, b, c;
+    //     double det_val;
+    //     while ((nextv(v, m) != START) or (flag == false)) {
+    //         if (nextv(v, m) == w) {
+    //             flag = true;
+    //         }
+    //         a = v;
+    //         b = nextv(v, m);
+    //         c = nextv(nextv(v, m), m);   // d = x = _diameter;  f = y = _tolerance;
+    //
+    //         double* matrix[3];
+    //         double line1[3] = {simplexes[a]->_diameter, simplexes[a]->_tolerance, 1.};
+    //         double line2[3] = {simplexes[b]->_diameter, simplexes[b]->_tolerance, 1.};
+    //         double line3[3] = {simplexes[c]->_diameter, simplexes[c]->_tolerance, 1.};
+    //         matrix[0] = line1;
+    //         matrix[1] = line2;
+    //         matrix[2] = line3;
+    //         det_val = Determinant(matrix, 3);
+    //
+    //         if (det_val >= 0){
+    //             leftturn = 1;
+    //         } else {
+    //             leftturn = 0;
+    //         };
+    //         if (leftturn) {
+    //             v = nextv(v, m);
+    //         } else {
+    //             simplexes.erase(simplexes.begin() + nextv(v, m));
+    //             m -= 1;
+    //             w -= 1;
+    //             v = predv(v, m);
+    //         };
+    //     };
+    //     return simplexes;
+    // };
+    //
+    // int nextv(int v, int m) {
+    //     if (v == m) {
+    //         return 0;
+    //     };
+    //     return v + 1;
+    // };
+    //
+    // int predv(int v, int m) {
+    //     if (v == 0) {
+    //         return m;
+    //     };
+    //     return v - 1;
+    // };
 
     vector<Simplex*> select_simplexes_by_lb_estimate_and_diameter_convex_hull() {   // Selects from best
         vector<Simplex*> selected_simplexes;
@@ -294,15 +317,16 @@ public:
                 double a2 = best_for_size[best_for_size.size()-1]->_diameter;
                 double b2 = best_for_size[best_for_size.size()-1]->_tolerance;
 
-                double slope = (b2 - b1)/(a2 - a1);
-                double bias = b1 - slope * a1;
-
-                for (int i=0; i < best_for_size.size(); i++) {
-                    if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
-                        simplexes_below_line.push_back(best_for_size[i]);
-                    };
-                };
-                selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
+                // double slope = (b2 - b1)/(a2 - a1);
+                // double bias = b1 - slope * a1;
+                //
+                // for (int i=0; i < best_for_size.size(); i++) {
+                //     if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
+                //         simplexes_below_line.push_back(best_for_size[i]);
+                //     };
+                // };
+                // selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
+                selected = stairs(best_for_size);  // Messes up simplexes_below_line
             } else {
                 selected = best_for_size;    // TODO: Why we divide all of them? Could divide only min_metrc_simplex.
                                              // Because practiacally this case does not occur ever.
