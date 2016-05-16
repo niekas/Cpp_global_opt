@@ -86,7 +86,8 @@ public:
             double lb_value = get_lb_value(X);
 
             if (lb_value < val2) {
-                improvement = l2norm(X2, X, _D);
+                // improvement = l2norm(X2, X, _D);
+                improvement = fabs(val2 - lb_value);
                 val2 = lb_value;
                 for (int k=0; k < _D; k++) {
                     X2[k] = X[k];
