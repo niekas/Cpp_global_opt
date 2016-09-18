@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     cout << "Glob value: " << funcs[0]->value(new Point(X, funcs[0]->_D)) << " == " << funcs[0]->_glob_f << endl;
     cout.precision(12);
     // cout << "Cls: " << cls << "  Fid: " << fid << endl;
-    cout << "Name: " << func_name << "  Stop_crit: " << stop_crit<< endl;
+    // cout << "Name: " << func_name << "  Stop_crit: " << stop_crit<< endl;
     if (alg->_status == "S") { cout << "  -->> Suspended <<--" << endl; }
     cout << "Calls: " << funcs[0]->_calls 
          << ", status: " << alg->_status  
