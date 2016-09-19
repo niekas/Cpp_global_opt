@@ -1178,7 +1178,7 @@ public:
         int _GKLS_class_D[] = {2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7};
         double _GKLS_class_global_dists[] = {0.9, 0.9, 0.66, 0.9, 0.66, 0.9, 0.66, 0.66, 0.66, 0.66, 0.66, 0.66};
         double _GKLS_class_global_radiuses[] = {0.2, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2};
-        double _GKLS_class_detlas[] = {1e-4, 1e-4, 1e-6, 1e-6, 1e-6, 1e-6, 1e-7, 1e-7, 1e-9, 1e-9, 1e-10, 1e-10};
+        double _GKLS_class_detlas[] = {1e-4, 1e-4, 1e-6, 1e-6, 1e-6, 1e-6, 1e-7, 1e-7, 1e-8, 1e-8, 1e-9, 1e-9};
 
         stringstream function_name; 
         function_name << cls << "_" << function_id;  
