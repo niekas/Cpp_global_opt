@@ -96,20 +96,92 @@ int main(int argc, char* argv[]) {
     cout << "Glob value: " << funcs[0]->value(new Point(X, funcs[0]->_D)) << " == " << funcs[0]->_glob_f << endl;
     cout.precision(12);
     // cout << "Cls: " << cls << "  Fid: " << fid << endl;
-    cout << "Name: " << func_name << "  Stop_crit: " << stop_crit<< endl;
+    // cout << "Name: " << func_name << "  Stop_crit: " << stop_crit<< endl;
     if (alg->_status == "S") { cout << "  -->> Suspended <<--" << endl; }
-    cout << "Calls: " << funcs[0]->_calls 
-         << ", status: " << alg->_status  
+    cout << endl <<  "   Calls: " << funcs[0]->_calls 
+         << "     Status: " << alg->_status  
          << ", duration: " << alg->_duration  
          << ", subregions: " << alg->_partition.size() << endl;  
 
+    // for (int i=0; i < funcs.size(); i++) {
+    //     cout.precision(10);
+    //     cout << "Solution for criteria " << i + 1 << ": " << funcs[i]->_f_min << endl;
+    //     // funcs[i]->_x_nearest_to_glob_x->print();
+    //     cout << "   Global minima for criteria " << i + 1 << ": " << funcs[i]->_glob_f << endl;
+    //     funcs[i]->_glob_x->print();
+    // };
     for (int i=0; i < funcs.size(); i++) {
-        cout.precision(10);
-        cout << "Solution for criteria " << i + 1 << ": " << funcs[i]->_f_min << endl;
+        // log_file.precision(12);
         // funcs[i]->_x_nearest_to_glob_x->print();
-        cout << "   Global minima for criteria " << i + 1 << ": " << funcs[i]->_glob_f << endl;
-        funcs[i]->_glob_x->print();
+        cout << "   Global minima:  ";
+
+        Point* p = funcs[i]->_glob_x;
+
+        for (int j=0; j < p->size(); j++) {
+             cout << p->_X[j] << " ";
+        };
+        cout << " -> ";
+        for (int j=0; j < p->_values.size(); j++) {
+            cout << p->_values[i] << " ";
+        };
+        cout << endl;
+        cout << "   Solution:       ";
+        for (int j=0; j < p->size(); j++) {
+             cout << funcs[i]->_x_nearest_to_glob_x->_X[j] << " ";
+        };
+        cout << " -> ";
+        cout << funcs[i]->_f_min << " " << endl;
     };
+
+    // Print results to evaluations file
+    ofstream log_file; 
+    log_file.open("log/evaluations.txt", ios::app);
+    log_file << endl << "Results:" << endl;
+
+    for (int i=0; i < funcs[0]->_D; i++) {
+        X[i] = funcs[0]->transform_back(funcs[0]->_glob_x, i);
+    };
+    // log_file << "Glob value: " << funcs[0]->value(new Point(X, funcs[0]->_D)) << " == " << funcs[0]->_glob_f << endl;
+    log_file.precision(12);
+    // cout << "Cls: " << cls << "  Fid: " << fid << endl;
+    // cout << "Name: " << func_name << "  Stop_crit: " << stop_crit<< endl;
+
+
+    // Pasitikrinti transformavimus kokioje erdvėje: globalus minimumas
+    // atspausdnamas ir kokioje erdvėje mano taškai atspausdinami.
+
+
+
+    for (int i=0; i < funcs.size(); i++) {
+        log_file.precision(12);
+        // funcs[i]->_x_nearest_to_glob_x->print();
+        log_file << "   Global minima:  ";
+
+        Point* p = funcs[i]->_glob_x;
+
+        for (int j=0; j < p->size(); j++) {
+             log_file << p->_X[j] << " ";
+        };
+        log_file << " -> ";
+        for (int j=0; j < p->_values.size(); j++) {
+            log_file << p->_values[i] << " ";
+        };
+        log_file << endl;
+        log_file << "   Solution:       ";
+        for (int j=0; j < p->size(); j++) {
+             log_file << funcs[i]->_x_nearest_to_glob_x->_X[j] << " ";
+        };
+        log_file << " -> ";
+        log_file << funcs[i]->_f_min << " ";
+    };
+
+    log_file << endl << endl;
+
+    if (alg->_status == "S") { cout << "  -->> Suspended <<--" << endl; }
+    log_file << "   Calls: " << funcs[0]->_calls 
+         << ", status: " << alg->_status  
+         << ", duration: " << alg->_duration  
+         << ", subregions: " << alg->_partition.size() << endl;  
 
 
     // Save results

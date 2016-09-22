@@ -9,6 +9,10 @@
 #include <math.h> 
 #include <limits>
 
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -368,6 +372,7 @@ public:
             };
         };
     };
+    // setas, hsetas, steady set
 
     void print(){
         _tree_root->print();
@@ -517,14 +522,30 @@ public:
         _calls += 1;
     };
 
+    void log_evaluation(Point* p) {
+       ofstream log_file; 
+       log_file.open("log/evaluations.txt", ios::app);
+       for (int i=0; i < p->size(); i++) {
+            log_file << setprecision(12) << p->_X[i] << " ";
+       };
+       log_file << " -> ";
+       for (int i=0; i < p->_values.size(); i++) {
+           log_file << setprecision(12) << p->_values[i] << " ";
+       };
+       log_file << endl;
+       log_file.close();
+    };
+
     Point* get(double *c, int argc){
         Point* p = new Point(c, argc);
         Point* cached_point = _points->add(p);
         if (cached_point) {
             delete p;
+            log_evaluation(cached_point);
             return cached_point;
         } else {
             update_meta(p);
+            log_evaluation(p);
             return p;
         };
     };
@@ -532,9 +553,11 @@ public:
     Point* get(Point* p){  // Get Point with its function value
         Point* cached_point = _points->add(p);
         if (cached_point) {
+            log_evaluation(cached_point);
             return cached_point;
         } else {
             update_meta(p);
+            log_evaluation(p);
             return p;
         };
     };
@@ -562,10 +585,31 @@ public:
         double e;
         if (_stopping_criteria == "x_dist") {
             for (int i=0; i<_D; i++) {
-                if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
+                // if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) {   // Infinity norm
+                //     return false;
+                // };
+                if (_delta * (1.0 - 0.0) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) {   // Infinity norm
                     return false;
                 };
             };
+
+            // for (int i=0; i<_D; i++) {
+            //     cout << _x_nearest_to_glob_x->_X[i] << "   -  " << _glob_x->_X[i] << "  =  " << _x_nearest_to_glob_x->_X[i] - _glob_x->_X[i] << endl;
+            //     // cout  << _delta * (_ub->_X[i] - _lb->_X[i]) << "   <   "<< fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i]) << endl;
+            //     // if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) {   // Infinity norm
+            //     //     return false;
+            //     // };
+            // };
+            // cout << endl;
+            // for (int i=0; i<_D; i++) {
+            //     cout << _glob_x->_X[i] << "  ";
+            //     // cout  << _delta * (_ub->_X[i] - _lb->_X[i]) << "   <   "<< fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i]) << endl;
+            //     // if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) {   // Infinity norm
+            //     //     return false;
+            //     // };
+            // };
+            // cout << endl;
+            // cout << _delta << endl;
             return true;
         } else if (_stopping_criteria == "pe0.01") {
             e = 0.01;
@@ -733,6 +777,8 @@ public:
         _D = 2;
         _lb = new Point(-30., -30.);
         _ub = new Point(30., 30.);
+        // Leistinoji sritis nuo -100 iki 100
+
         _glob_x = new Point(M_PI, M_PI);  // Point where global function minimum is (should be list)
         _glob_f = -1.0;                   // Predefined global function minimum
         _L = 5.01891948878e-05;

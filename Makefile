@@ -7,6 +7,7 @@ compile:
 
 run: compile
 	clear
+	# ./asimpl.out --func_name=jennrichsampson --stop_crit=pe1
 	./asimpl.out --func_cls=1 --func_id=1
 	
 

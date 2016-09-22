@@ -35,6 +35,8 @@ public:
         log_file.close();
         log_file.open("log/front.txt");
         log_file.close();
+        log_file.open("log/evaluations.txt");
+        log_file.close();
     };
 
     int _iteration;
@@ -422,8 +424,8 @@ public:
         // Select all simplexes which have best _min_vert_value for its size 
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
-                    (sorted_partition[i]->_min_lb_value == selected[j]->_min_lb_value)) {
+                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&               // Euklidinis atstumas ne didesnis nei 1e-8
+                    (sorted_partition[i]->_min_lb_value == selected[j]->_min_lb_value)) {   // Buvo naudojamas: epsilon 1e-8, 1e-10
                     selected_simplexes.push_back(sorted_partition[i]);
                 };
             };
@@ -765,6 +767,8 @@ public:
     // };
 
     void minimize(vector<Function*> funcs){
+        ofstream log_file; 
+
         _funcs = funcs;
         timestamp_t start = get_timestamp();
         partition_feasable_region_combinatoricly();     // Note: Should not use global variables
@@ -774,6 +778,9 @@ public:
         // Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
 
         while (_funcs[0]->_calls <= _max_calls && _duration <= _max_duration && !is_accurate_enough()) { // _func->pe() > _min_pe){
+            log_file.open("log/evaluations.txt", ios::app);
+            log_file << endl;
+            log_file.close();
             // Selects simplexes to divide
             vector<Simplex*> simplexes_to_divide;
             if (_iteration == 0) {
