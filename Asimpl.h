@@ -422,10 +422,12 @@ public:
         selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
 
         // Select all simplexes which have best _min_vert_value for its size 
+        double eps = 1e-16;
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
                 if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&               // Euklidinis atstumas ne didesnis nei 1e-8
-                    (sorted_partition[i]->_min_lb_value == selected[j]->_min_lb_value)) {   // Buvo naudojamas: epsilon 1e-8, 1e-10
+                    (sorted_partition[i]->_min_lb_value - eps <= selected[j]->_min_lb_value) &&
+                    (sorted_partition[i]->_min_lb_value + eps >= selected[j]->_min_lb_value)) {   // Buvo naudojamas: epsilon 1e-8, 1e-10
                     selected_simplexes.push_back(sorted_partition[i]);
                 };
             };
