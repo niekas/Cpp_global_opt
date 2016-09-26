@@ -56,6 +56,7 @@ def show_partition(filename='partition.txt'):
             if simplex:
                 add_to.append(simplex)
 
+    title = title + 'Dalinimui pasirinkta simpleksu: ' + (str(len(selected)) + " is " + (str(len(simplexes))))
     show_potential(simplexes, selected, title=title)
 
 
@@ -69,78 +70,98 @@ def l2norm(a1, a2):
 def show_potential(simplexes, selected=[], show=True, title=''):
     from matplotlib import pyplot as plt
     ## Draw two plots
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,6), projection='3d')
-    # ax = fig.add_subplot(1, 2, 1, projection='3d')
-    fig = plt.figure(figsize=(14,6))
-    if len(simplexes[0]) > 4:
-        ax1 = fig.add_subplot(121, projection='3d')
-    else:
-        ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    # fig = plt.figure(figsize=(14,6))
+    # if len(simplexes[0]) > 4:
+    #     ax1 = fig.add_subplot(121, projection='3d')
+    # else:
+    #     ax1 = fig.add_subplot(121)
+    # ax2 = fig.add_subplot(122)
+    # print('got title: ', title)
+    # fig.suptitle(title)
+    # plt.title(title)
+    #
+    # ax2 = fig.add_subplot(111)
+
+
+    ## Draw one plot
+    fig = plt.figure(figsize=(10,10))
     fig.suptitle(title)
+    ax2 = fig.add_subplot(111)
+
 
     for simplex in simplexes:
         ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'bo')
     for simplex in selected:
         ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'ro')
+
+
+    ## Convex-hull
+    # for i in range(len(selected[:-1])):
+    #     ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
+    #              [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+
+    ## Stairs rule
     for i in range(len(selected[:-1])):
-        ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
-                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+        mid_size = (selected[i][-1]['size'] + selected[i+1][-1]['size']) / 2.
+        # mid_value = (selected[i][-1]['value'] + selected[i+1][-1]['value']) / 2.
+        ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
+                [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
+
     ax2.set_ylabel(u'Mažiausios funkcijos reikšm$\.{e}$s simplekse $\k{i}$vertis')
     ax2.set_xlabel('Simplekso diametras')
-    ax1.set_ylabel('X2')
-    ax1.set_xlabel('X1')
-
-    for simplex in simplexes:
-        s = simplex[:-1]
-        for j in range(len(s)):
-            if len(s) == 3:
-                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], 'b-')
-            else:
-                # should use permutations here
-                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], [s[j-1][2], s[j][2]], 'b-')
-
-    for simplex in selected:
-        s = sort_vertexes_longest_edge_first(simplex)[:-1]
-        for i, j in permutations(range(len(s)), 2):
-            if len(s) == 3:
-                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], 'r-', linewidth=2)
-            else:
-                # should use permutations here
-                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], [s[i][2], s[j][2]], 'r-', linewidth=2)
-
-        edge_lengths = []   # [(vertex_index, vertex_index, edge_length),]
-        for i, j in permutations(range(len(s)), 2):
-            if j > i:
-                edge_lengths.append((i, j, l2norm(s[i][:-1], s[j][:-1])))
-        le_i, le_j, le_length = max(edge_lengths, key=lambda x: x[-1])
-
-        if len(s) == 3:
-            division_point = [(s[le_i][0]+s[le_j][0])/2., (s[le_i][1]+s[le_j][1])/2.]
-            ax1.plot([division_point[0]], [division_point[1]], 'ro')
-            ax1.plot([division_point[0], s[2][0]], [division_point[1], s[2][1]], 'r--')
-        else:
-            division_point = [(s[le_i][0] + s[le_j][0])/2., (s[le_i][1] + s[le_j][1])/2., (s[le_i][2] + s[le_j][2])/2.]
-            ax1.plot([division_point[0]], [division_point[1]], [division_point[2]], 'ro')
-            for i in range(len(s)):
-                if i != le_j and i != le_i:
-                    ax1.plot([division_point[0], s[i][0]], [division_point[1], s[i][1]], [division_point[2], s[i][2]], 'r--')
-                # ax1.plot([division_point[0], s[3][0]], [division_point[1], s[3][1]], [division_point[2], s[3][2]], 'r--')
-
-    for simplex in simplexes:
-        for j in range(len(s)):
-            if len(s) == 3:
-                ax1.plot([simplex[j][0]], [simplex[j][1]], 'bo')
-            else:
-                ax1.plot([simplex[j][0]], [simplex[j][1]], [simplex[j][2]], 'bo')
+    # ax1.set_ylabel('X2')
+    # ax1.set_xlabel('X1')
+    #
+    # for simplex in simplexes:
+    #     s = simplex[:-1]
+    #     for j in range(len(s)):
+    #         if len(s) == 3:
+    #             ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], 'b-')
+    #         else:
+    #             # should use permutations here
+    #             ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], [s[j-1][2], s[j][2]], 'b-')
+    #
+    # for simplex in selected:
+    #     s = sort_vertexes_longest_edge_first(simplex)[:-1]
+    #     for i, j in permutations(range(len(s)), 2):
+    #         if len(s) == 3:
+    #             ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], 'r-', linewidth=2)
+    #         else:
+    #             # should use permutations here
+    #             ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], [s[i][2], s[j][2]], 'r-', linewidth=2)
+    #
+    #     edge_lengths = []   # [(vertex_index, vertex_index, edge_length),]
+    #     for i, j in permutations(range(len(s)), 2):
+    #         if j > i:
+    #             edge_lengths.append((i, j, l2norm(s[i][:-1], s[j][:-1])))
+    #     le_i, le_j, le_length = max(edge_lengths, key=lambda x: x[-1])
+    #
+    #     if len(s) == 3:
+    #         division_point = [(s[le_i][0]+s[le_j][0])/2., (s[le_i][1]+s[le_j][1])/2.]
+    #         ax1.plot([division_point[0]], [division_point[1]], 'ro')
+    #         ax1.plot([division_point[0], s[2][0]], [division_point[1], s[2][1]], 'r--')
+    #     else:
+    #         division_point = [(s[le_i][0] + s[le_j][0])/2., (s[le_i][1] + s[le_j][1])/2., (s[le_i][2] + s[le_j][2])/2.]
+    #         ax1.plot([division_point[0]], [division_point[1]], [division_point[2]], 'ro')
+    #         for i in range(len(s)):
+    #             if i != le_j and i != le_i:
+    #                 ax1.plot([division_point[0], s[i][0]], [division_point[1], s[i][1]], [division_point[2], s[i][2]], 'r--')
+    #             # ax1.plot([division_point[0], s[3][0]], [division_point[1], s[3][1]], [division_point[2], s[3][2]], 'r--')
+    #
+    # for simplex in simplexes:
+    #     for j in range(len(s)):
+    #         if len(s) == 3:
+    #             ax1.plot([simplex[j][0]], [simplex[j][1]], 'bo')
+    #         else:
+    #             ax1.plot([simplex[j][0]], [simplex[j][1]], [simplex[j][2]], 'bo')
 
     # ax2.axis([min([simplexes]) -0.05, 1.05, -0.05, 1.05])
     max_size = max([s[-1]['size'] for s in simplexes])
     ax2.set_xlim([-0.05, max_size + 0.05])
-    ax1.axis([-0.05, 1.05, -0.05, 1.05])
+    # ax1.axis([-0.05, 1.05, -0.05, 1.05])
     if show:
         plt.show()
-    return ax1, ax2
+    # return ax1, ax2
 
 
 def sort_vertexes_longest_edge_first(simplex):
