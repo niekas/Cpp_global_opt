@@ -96,16 +96,16 @@ def show_potential(simplexes, selected=[], show=True, title=''):
 
 
     ## Convex-hull
-    # for i in range(len(selected[:-1])):
-    #     ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
-    #              [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+    for i in range(len(selected[:-1])):
+        ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
+                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
 
     ## Stairs rule
-    for i in range(len(selected[:-1])):
-        mid_size = (selected[i][-1]['size'] + selected[i+1][-1]['size']) / 2.
-        # mid_value = (selected[i][-1]['value'] + selected[i+1][-1]['value']) / 2.
-        ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
-                [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
+    # for i in range(len(selected[:-1])):
+    #     mid_size = (selected[i][-1]['size'] + selected[i+1][-1]['size']) / 2.
+    #     # mid_value = (selected[i][-1]['value'] + selected[i+1][-1]['value']) / 2.
+    #     ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
+    #             [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
 
     ax2.set_ylabel(u'Mažiausios funkcijos reikšm$\.{e}$s simplekse $\k{i}$vertis')
     ax2.set_xlabel('Simplekso diametras')
