@@ -312,10 +312,10 @@ public:
                 vector<Simplex*> simplexes_below_line;
                 // double a1 = best_for_size[0]->_diameter;
                 // double b1 = best_for_size[0]->_tolerance;
-                double a1 = min_metric_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
-                double b1 = min_metric_simplex->_tolerance;
-                double a2 = best_for_size[best_for_size.size()-1]->_diameter;
-                double b2 = best_for_size[best_for_size.size()-1]->_tolerance;
+                double x1 = min_metric_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
+                double y1 = min_metric_simplex->_tolerance;
+                double x2 = best_for_size[best_for_size.size()-1]->_diameter;
+                double y2 = best_for_size[best_for_size.size()-1]->_tolerance;
 
                 // double slope = (b2 - b1)/(a2 - a1);
                 // double bias = b1 - slope * a1;
@@ -326,7 +326,30 @@ public:
                 //     };
                 // };
                 // selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
-                selected = stairs(best_for_size);  // Messes up simplexes_below_line
+
+                double max_dist_from_best_and_bigest_line = 0;
+                int max_dist_idx = -1;
+                // for (int i=0; i < best_for_size.size(); i++) {
+                for (int i=0; i < best_for_size.size(); i++) {
+                    double x0 = best_for_size[i]->_diameter;
+                    double y0 = best_for_size[i]->_tolerance;
+                    if ((x0 > x1) and (x0 < x2)) { 
+                        double dist = ((y2 - y1)*x0 - (x2 - x1)*y0 + x2*y1 - y2*x1) / sqrt((y2-y1)*(y2-y1) + (x2-x1)*(x2-x1));
+                        if (dist > max_dist_from_best_and_bigest_line) {
+                            max_dist_idx = i;
+                            max_dist_from_best_and_bigest_line = dist;
+                        };
+                        cout << x2 << " " << y2 << ", " << x1 << " " << y1 << ", " << x0 << " " << y0 << endl;
+                        cout << "Dist: " << dist << endl;
+                    };
+                };
+                selected.push_back(min_metric_simplex); 
+                if (max_dist_idx > 0) {
+                    selected.push_back(best_for_size[max_dist_idx]); 
+                };
+                selected.push_back(best_for_size[best_for_size.size()-1]);
+
+                // selected = stairs(best_for_size);  // Messes up simplexes_below_line
             } else {
                 selected = best_for_size;    // TODO: Why we divide all of them? Could divide only min_metrc_simplex.
                                              // Because practiacally this case does not occur ever.
@@ -622,7 +645,7 @@ public:
             // };
 
             //// Draw partition in each iteration:
-            // Simplex::log_partition(_partition, simplexes_to_divide);
+            // Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
             // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
             // pclose(testp);
 

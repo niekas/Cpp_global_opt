@@ -386,6 +386,7 @@ public:
 
     static void log_partition(vector<Simplex*> simplexes,
                               vector<Simplex*> selected,
+                              vector<Function*> funcs,
                               string label="Partition:",
                               int iteration=0) {
        ofstream log_file; 
@@ -423,6 +424,11 @@ public:
            };
        };
 
+       log_file << "Global min:" << endl;
+       for (int j=0; j < funcs[0]->_glob_x->size(); j++) {
+                log_file << funcs[0]->_glob_x->_X[j] << " ";
+       };
+       log_file << " (" << funcs[0]->_glob_f <<"); ";
        log_file.close();
     };
 
