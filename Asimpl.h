@@ -325,6 +325,9 @@ public:
         vector<double> diameters;
         vector<Simplex*> best_for_size;
 
+        double f_eps = 0; // 1e-16;
+        double d_eps = 1e-8;
+
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
@@ -340,7 +343,9 @@ public:
             // Saves unique diameters
             unique_diameter = true;
             for (int j=0; j < diameters.size(); j++) {
-                if (diameters[j] == sorted_partition[i]->_diameter) {
+                // if (diameters[j] == sorted_partition[i]->_diameter) {
+                if ((diameters[j] <= sorted_partition[i]->_diameter + d_eps) and
+                    (diameters[j] >= sorted_partition[i]->_diameter - d_eps)) {
                     unique_diameter = false; break;
                 };
             };
@@ -351,7 +356,9 @@ public:
             // If this simplex is better then previous with same size swap them.
             found_with_same_size = false;
             for (int j=0; j < best_for_size.size(); j++) {
-                if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
+                // if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter) {
+                if ((best_for_size[j]->_diameter <= sorted_partition[i]->_diameter + d_eps) and
+                    (best_for_size[j]->_diameter >= sorted_partition[i]->_diameter - d_eps)) {
                     found_with_same_size = true;
                     if (best_for_size[j]->_min_lb_value > sorted_partition[i]->_min_lb_value) {
                         best_for_size.erase(best_for_size.begin()+j);
@@ -422,12 +429,13 @@ public:
         selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
 
         // Select all simplexes which have best _min_vert_value for its size 
-        double eps = 1e-16;
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&               // Euklidinis atstumas ne didesnis nei 1e-8
-                    (sorted_partition[i]->_min_lb_value - eps <= selected[j]->_min_lb_value) &&
-                    (sorted_partition[i]->_min_lb_value + eps >= selected[j]->_min_lb_value)) {   // Buvo naudojamas: epsilon 1e-8, 1e-10
+                // if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&               // Euklidinis atstumas ne didesnis nei 1e-8
+                if ((sorted_partition[i]->_diameter >= selected[j]->_diameter - d_eps) and
+                    (sorted_partition[i]->_diameter <= selected[j]->_diameter + d_eps) &&           
+                    (sorted_partition[i]->_min_lb_value - f_eps <= selected[j]->_min_lb_value) &&
+                    (sorted_partition[i]->_min_lb_value + f_eps >= selected[j]->_min_lb_value)) {   // Buvo naudojamas: epsilon 1e-8, 1e-10
                     selected_simplexes.push_back(sorted_partition[i]);
                 };
             };
