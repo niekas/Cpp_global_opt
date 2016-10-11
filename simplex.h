@@ -156,6 +156,69 @@ public:
         return estimates_of_accurate_lb_min;
     };
 
+    vector<Point*> find_two_best_vert_lb_mins(Simplex* simpl, vector<double> Ls) {
+        vector<Point*> lb_mins;
+        for (int i=0; i < Ls.size(); i++) {    // Iterate through criterias
+            // Find best vert for this criteria 
+            Point* min_vert = simpl->_verts[0];
+            Point* min_vert2 = simpl->_verts[0];
+            for (int j=0; j < simpl->_verts.size(); j++) {
+                if (simpl->_verts[j]->_values[i] < min_vert->_values[i]) {
+                    min_vert = simpl->_verts[j];
+                };
+            };
+            if (min_vert2 == min_vert) {
+                min_vert2 = simpl->_verts[1];
+            };
+            for (int j=0; j < simpl->_verts.size(); j++) {
+                if ((simpl->_verts[j]->_values[i] < min_vert2->_values[i]) and (min_vert != simpl->_verts[j])) {
+                    min_vert2 = simpl->_verts[j];
+                };
+            };
+
+            double dist = l2norm(min_vert, min_vert2);
+
+            double L = Ls[i];
+
+            // Kokia formule apskaiciuoti apatinei ribai naudojant dvi virsunes?
+            double lb_value = (min_vert->_values[i] + min_vert2->_values[i] - L * dist) / 2.;
+
+            // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
+
+            Point* lb_min = new Point(simpl->_D);
+            lb_min->add_value(lb_value);
+
+            lb_mins.push_back(lb_min->copy());
+            delete lb_min;
+        };
+        return lb_mins;
+    };
+
+    vector<Point*> find_one_vert_lb_mins(Simplex* simpl, vector<double> Ls) {
+        vector<Point*> lb_mins;
+        for (int i=0; i < Ls.size(); i++) {    // Iterate through criterias
+            // Find best vert for this criteria 
+            Point* min_vert = simpl->_verts[0];
+            for (int j=0; j < simpl->_verts.size(); j++) {
+                simpl->_verts[j]->print();
+                if (simpl->_verts[j]->_values[i] < min_vert->_values[i]) {
+                    min_vert = simpl->_verts[j];
+                };
+            };
+
+            double L = Ls[i];
+            double lb_value = min_vert->_values[i] - L * simpl->_diameter;
+            // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
+
+            Point* lb_min = new Point(simpl->_D);
+            lb_min->add_value(lb_value);
+
+            lb_mins.push_back(lb_min->copy());
+            delete lb_min;
+        };
+        return lb_mins;
+    };
+
     // static void extend_region_with_vertex_neighbours(Point* vertex, SimplexTree* region, int depth);
 
     static void update_estimates(vector<Simplex*> simpls, vector<Function*> funcs, vector<Point*> pareto_front, int iteration);
@@ -726,7 +789,9 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
                 delete simpls[sid]->_min_lbs[i];
             };
 
-            simpls[sid]->_min_lbs = simpls[sid]->find_accurate_lb_min_estimates(simpls[sid]->_verts, Simplex::glob_Ls);
+            // simpls[sid]->_min_lbs = simpls[sid]->find_accurate_lb_min_estimates(simpls[sid]->_verts, Simplex::glob_Ls);
+            // simpls[sid]->_min_lbs = simpls[sid]->find_one_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
+            simpls[sid]->_min_lbs = simpls[sid]->find_two_best_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
 
             simpls[sid]->_tolerance = simpls[sid]->_min_lbs[0]->_values[0];   // simpls[sid]->find_tolerance(pareto_front);
 
