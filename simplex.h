@@ -181,7 +181,7 @@ public:
             double L = Ls[i];
 
             // Kokia formule apskaiciuoti apatinei ribai naudojant dvi virsunes?
-            double lb_value = (min_vert->_values[i] + min_vert2->_values[i] - L * dist) / 2.;
+            double lb_value = (min_vert->_values[i] + min_vert2->_values[i] - L * simpl->_diameter) / 2.;
 
             // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
 
