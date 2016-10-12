@@ -1,7 +1,10 @@
 #ifndef ASIMPL_H
 #define ASIMPL_H 
 // This algorithm uses convex-hull strategy:
-//      [>] divide convex hull from best lb value to biggest
+//      [>] divide convex hull from best lb value to biggest (best two values lb)
+//      [ ]   ---- || ----   (longest edge lb)
+//      [ ] different convex hull: from best function value simplex.
+//
 //      [ ] divide only with best lb value
 //      [ ] divide with best lb value plus biggest
 //      [ ] divide from best function value
@@ -326,13 +329,13 @@ public:
                 double slope = (b2 - b1)/(a2 - a1);
                 double bias = b1 - slope * a1;
 
-                for (int i=0; i < best_for_size.size(); i++) {
-                    if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
-                        simplexes_below_line.push_back(best_for_size[i]);
-                    };
-                };
-                selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
-                // selected = stairs(best_for_size);  // Messes up simplexes_below_line
+                // for (int i=0; i < best_for_size.size(); i++) {
+                //     if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
+                //         simplexes_below_line.push_back(best_for_size[i]);
+                //     };
+                // };
+                // selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
+                selected = stairs(best_for_size);  // Messes up simplexes_below_line
             } else {
                 selected = best_for_size;    // TODO: Why we divide all of them? Could divide only min_metrc_simplex.
                                              // Because practiacally this case does not occur ever.
