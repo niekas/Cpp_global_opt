@@ -40,7 +40,7 @@ public:
         _tolerance = 0;
         _le_v1 = 0;
         _le_v2 = 0;
-        // _min_vert = 0;
+        _min_vert = 0;
         // _max_vert = 0;
         // _max_vert_value = -numeric_limits<double>::max();
         // _min_vert_value = numeric_limits<double>::max();
@@ -76,7 +76,7 @@ public:
     vector<double> _Ls;          // Cumulative estimates of Lipschitz constants for each criteria
     vector<double> _grad_norms;  // Lipschitz constant estimate calculated by Simplex Gradient Euclidean norm.
 
-    // Point* _min_vert;   // Pointer to vertex with lowest function value 
+    Point* _min_vert;   // Pointer to vertex with lowest function value 
     // double _min_vert_value;  // _min_vert function value 
     // Point* _max_vert;
     // double _max_vert_value;
@@ -135,6 +135,13 @@ public:
                    Simplex::glob_L_was_updated = true;
                };
            };
+        };
+
+        _min_vert = _verts[0];
+        for (int i=0; i < _verts.size(); i++) {
+            if (_verts[i]->_values[0] < _min_vert->_values[0]) {
+                _min_vert = _verts[i];
+            };
         };
         // ToDo: _grad_norms - is not representative title, should be renamed
         // to mark that these are Lipschitz constant estimates for this simplex.

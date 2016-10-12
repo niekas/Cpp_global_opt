@@ -2,7 +2,8 @@
 #define ASIMPL_H 
 // This algorithm uses convex-hull strategy:
 //      [>] divide convex hull from best lb value to biggest (best two values lb, dist between verts)
-//      [ ]   ---- || ----   (best two values lb, simplex diameter)
+//      [+]   ---- || ----   (best two values lb, simplex diameter)
+//      [+]   stairs ---- || ----   (best two values lb, dist between verts)
 //      [ ]   ---- || ----   (longest edge lb)
 //      [ ] different convex hull: from best function value simplex.
 //
@@ -283,7 +284,10 @@ public:
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
-            if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
+            // if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
+            //     min_metric_simplex = sorted_partition[i];
+            // };
+            if (sorted_partition[i]->_min_vert->_values[0] < min_metric_simplex->_min_vert->_values[0]) {
                 min_metric_simplex = sorted_partition[i];
             };
             // Saves unique diameters
