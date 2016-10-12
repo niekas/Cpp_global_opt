@@ -123,6 +123,8 @@ public:
         //     E = 1e-8;
         // };
 
+        double glob_L_coef = 0.8;
+
         for (int i=0; i < funcs.size(); i++) {
             _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
 
@@ -130,8 +132,8 @@ public:
            if (Simplex::glob_Ls.size() < funcs.size()) {
                Simplex::glob_Ls.push_back(_grad_norms[i]);
            } else {
-               if (Simplex::glob_Ls[i] < _grad_norms[i]) {
-                   Simplex::glob_Ls[i] = _grad_norms[i];
+               if (Simplex::glob_Ls[i] < glob_L_coef * _grad_norms[i]) {
+                   Simplex::glob_Ls[i] = glob_L_coef * _grad_norms[i];
                    Simplex::glob_L_was_updated = true;
                };
            };

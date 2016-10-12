@@ -287,7 +287,7 @@ public:
             // if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
             //     min_metric_simplex = sorted_partition[i];
             // };
-            if (sorted_partition[i]->_min_vert->_values[0] < min_metric_simplex->_min_vert->_values[0]) {
+            if (sorted_partition[i]->_tolerance < min_metric_simplex->_tolerance) {
                 min_metric_simplex = sorted_partition[i];
             };
             // Saves unique diameters

@@ -7,7 +7,7 @@ compile:
 
 run: compile
 	clear
-	./asimpl.out --func_cls=1 --func_id=5
+	./asimpl.out --func_cls=4 --func_id=34
 	
 
 test:
