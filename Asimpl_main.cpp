@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     char* func_name = {'\0'};
     char* stop_crit = {'\0'};
     int max_calls = 40000;
-    int max_duration = 3600;
+    int max_duration = 2*3600;
     double glob_L = numeric_limits<double>::max();
 
     int opt_id;

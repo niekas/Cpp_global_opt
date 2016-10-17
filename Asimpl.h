@@ -635,10 +635,13 @@ public:
             //     exit(0);
             // };
 
-            //// Draw partition in each iteration:
-            // Simplex::log_partition(_partition, simplexes_to_divide);
-            // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-            // pclose(testp);
+            // if (_iteration > 5300) {
+            if (_funcs[0]->_calls > 8000) {
+                //// Draw partition in each iteration:
+                Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
+                FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+                pclose(testp);
+            };
 
             //// Draw pareto front in each iteration:
             // Simplex::log_front(_pareto_front, simplexes_to_divide);

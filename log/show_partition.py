@@ -13,7 +13,9 @@ def show_partition(filename='partition.txt'):
     f = open(filename)
     simplexes = []
     selected_mode = False
+    wanted_mode = False
     selected = []
+    wanted = []
     title = ''
     # ok = False
     for line in f:
@@ -28,23 +30,29 @@ def show_partition(filename='partition.txt'):
             selected_mode = True
             continue
             # Ignore till empty line found
+        if 'Wanted' in line:
+            selected_mode = False
+            wanted_mode = True
+            continue
         parts = line.split(';')
         simplex = []
 
         if line == '\n':
             selected_mode = False
             if simplexes and iteration >= draw_from_iteration:
-                show_potential(simplexes, selected, title=title)
+                show_potential(simplexes, selected, wanted, title=title)
             simplexes = []
             selected = []
             continue
                     # [[0.75, 0.5], [0.875, 0.375], [1.0, 0.5]]
                     # plt.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], 'b-')
         else:
-            if not selected_mode:
+            if not selected_mode and not wanted_mode:
                 add_to = simplexes
-            else:
+            elif not wanted_mode:
                 add_to = selected
+            else:
+                add_to = wanted
             for part in parts:
                 if ',' not in part:
                     simplex.append([float(e) for e in part.split() if not ('(') in e])
@@ -57,7 +65,7 @@ def show_partition(filename='partition.txt'):
                 add_to.append(simplex)
 
     title = title + 'Dalinimui pasirinkta simpleksu: ' + (str(len(selected)) + " is " + (str(len(simplexes))))
-    show_potential(simplexes, selected, title=title)
+    show_potential(simplexes, selected, wanted, title=title)
 
 
 def l2norm(a1, a2):
@@ -67,7 +75,7 @@ def l2norm(a1, a2):
     return sqrt(sum([e**2 for e in (a(a1)-a(a2))]))
 
 
-def show_potential(simplexes, selected=[], show=True, title=''):
+def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     from matplotlib import pyplot as plt
     ## Draw two plots
     # fig = plt.figure(figsize=(14,6))
@@ -96,16 +104,20 @@ def show_potential(simplexes, selected=[], show=True, title=''):
 
 
     ## Convex-hull
-    # for i in range(len(selected[:-1])):
-    #     ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
-    #              [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+    for i in range(len(selected[:-1])):
+        ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
+                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+
+    ## Wanted simplices
+    for simplex in wanted:
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'yo')
 
     ## Stairs rule
-    for i in range(len(selected[:-1])):
-        mid_size = (selected[i][-1]['size'] + selected[i+1][-1]['size']) / 2.
-        # mid_value = (selected[i][-1]['value'] + selected[i+1][-1]['value']) / 2.
-        ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
-                [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
+    # for i in range(len(selected[:-1])):
+    #     mid_size = (selected[i][-1]['size'] + selected[i+1][-1]['size']) / 2.
+    #     # mid_value = (selected[i][-1]['value'] + selected[i+1][-1]['value']) / 2.
+    #     ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
+    #             [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
 
     ax2.set_ylabel(u'Mažiausios funkcijos reikšm$\.{e}$s simplekse $\k{i}$vertis')
     ax2.set_xlabel('Simplekso diametras')

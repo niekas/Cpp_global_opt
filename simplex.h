@@ -123,7 +123,7 @@ public:
         //     E = 1e-8;
         // };
 
-        double glob_L_coef = 0.8;
+        double glob_L_coef = 0.5;
 
         for (int i=0; i < funcs.size(); i++) {
             _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
@@ -171,9 +171,13 @@ public:
             // Find best vert for this criteria 
             Point* min_vert = simpl->_verts[0];
             Point* min_vert2 = simpl->_verts[0];
+            Point* max_vert = simpl->_verts[0];
             for (int j=0; j < simpl->_verts.size(); j++) {
                 if (simpl->_verts[j]->_values[i] < min_vert->_values[i]) {
                     min_vert = simpl->_verts[j];
+                };
+                if (simpl->_verts[j]->_values[i] > max_vert->_values[i]) {
+                    max_vert = simpl->_verts[j];
                 };
             };
             if (min_vert2 == min_vert) {
@@ -185,12 +189,13 @@ public:
                 };
             };
 
-            double dist = l2norm(min_vert, min_vert2);
+            // double dist = l2norm(min_vert, min_vert2);
 
             double L = Ls[i];
 
             // Kokia formule apskaiciuoti apatinei ribai naudojant dvi virsunes?
-            double lb_value = (min_vert->_values[i] + min_vert2->_values[i] - L * simpl->_diameter) / 2.;
+            // double lb_value = (min_vert->_values[i] + min_vert2->_values[i] - L * simpl->_diameter) / 2.;
+            double lb_value = (min_vert->_values[i] + max_vert->_values[i] - L * simpl->_diameter) / 2.;
 
             // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
 
@@ -456,8 +461,33 @@ public:
        log_file.close();
     };
 
+
+    bool is_in_simplex(Point* p, Simplex* simpl) {
+//     '''Checks if point is in the triangle region using Barycentric coordinates:
+//     www.farinhansford.com/dianne/teaching/cse470/materials/BarycentricCoords.pdf'''
+        // Implement this in 2 dimensions
+        // A = det(
+        //     [simpl->_verts[0]->_X[0]]
+        //         );
+        // A = det(a([[t[0][0], t[1][0], t[2][0]], [t[0][1], t[1][1], t[2][1]], [1., 1., 1.]]))
+        // A1 = det(a([[p[0], t[1][0], t[2][0]], [p[1], t[1][1], t[2][1]], [1, 1, 1]]))
+        // A2 = det(a([[t[0][0], p[0], t[2][0]], [t[0][1], p[1], t[2][1]], [1, 1, 1]]))
+        // A3 = det(a([[t[0][0], t[1][0], p[0]], [t[0][1], t[1][1], p[1]], [1, 1, 1]]))
+        // u = A1 / A
+        // v = A2 / A
+        // w = A3 / A
+        //
+        // // Implement this in 3 and 4 dimensions
+        // if ((u >= 0) and (v >= 0) and (w >= 0)) {
+        //     return True;
+        // };
+        // return False;
+
+    };
+
     static void log_partition(vector<Simplex*> simplexes,
                               vector<Simplex*> selected,
+                              vector<Function*> funcs,
                               string label="Partition:",
                               int iteration=0) {
        ofstream log_file; 
@@ -465,6 +495,47 @@ public:
        log_file.close();
        log_file.open("log/partition.txt", ios::app);
        log_file << label << iteration << ":" << endl;
+
+
+       vector<Simplex*> simpls_near_glob_min;
+       for (int i=0; i < simplexes.size(); i++) {
+            // How to check weather point is in simplex?
+
+            for (int j=0; j < simplexes[i]->_verts.size(); j++) {
+                if (simplexes[i]->_verts[j] == funcs[0]->_x_nearest_to_glob_x) {
+                    simpls_near_glob_min.push_back(simplexes[i]);
+                };
+            };
+       };
+
+       double min_dist = numeric_limits<int>::max();
+
+       Simplex* min_dist_simpl;
+       for (int i=0; i < simpls_near_glob_min.size(); i++) {
+           Point* center = new Point(funcs[0]->_D);
+           // Iterate through points
+           Simplex* simpl = simpls_near_glob_min[i];
+           for (int j=0; j < simpl->_verts.size(); j++) {
+               for (int c=0; c < simpl->_D; c++) {
+                    center->_X[c] += simpl->_verts[j]->_X[c];
+               };
+           };
+           // Divide by number of verts
+           for (int c=0; c < simpl->_D; c++) {
+               center->_X[c] /= simpl->_verts.size();
+           };
+           // Find distance and save smallest
+           double dist = l2norm(center, funcs[0]->_glob_x);
+           if (dist < min_dist) {
+               min_dist = dist;
+               min_dist_simpl = simpl;
+           };
+       };
+       cout << "Min dist is: " << min_dist << endl;
+
+       // cout << simpls_near_glob_min.size() << endl;
+
+
        for (int i=0; i < simplexes.size(); i++) {
            for (int j=0; j < simplexes[i]->_verts.size(); j++) {
                for (int k=0; k < simplexes[i]->_verts[j]->size(); k++){
@@ -494,6 +565,34 @@ public:
                log_file << " ("<< selected[i]->_diameter << "," << selected[i]->_tolerance << ")" << endl;
            };
        };
+
+       log_file << "Wanted:" << endl;
+       // for (int i=0; i < simpls_near_glob_min.size(); i++) {
+           // for (int j=0; j < simpls_near_glob_min[i]->_verts.size(); j++) {
+           //     for (int k=0; k < simpls_near_glob_min[i]->_verts[j]->size(); k++){
+           //          log_file << simpls_near_glob_min[i]->_verts[j]->_X[k] << " ";
+           //     };
+           //     log_file << " (" << simpls_near_glob_min[i]->_verts[j]->_values[0]<<"); ";
+           // };
+           // if (simpls_near_glob_min[i]->_L_strategy == Self) {
+           //     log_file << " ("<< simpls_near_glob_min[i]->_diameter << "," << simpls_near_glob_min[i]->_tolerance << ")" << endl;
+           // };
+           // if (simpls_near_glob_min[i]->_L_strategy == Neighbours) {
+           //     log_file << " ("<< simpls_near_glob_min[i]->_diameter << "," << simpls_near_glob_min[i]->_tolerance << ")" << endl;
+           // };
+           for (int j=0; j < min_dist_simpl->_verts.size(); j++) {
+               for (int k=0; k < min_dist_simpl->_verts[j]->size(); k++){
+                    log_file << min_dist_simpl->_verts[j]->_X[k] << " ";
+               };
+               log_file << " (" << min_dist_simpl->_verts[j]->_values[0]<<"); ";
+           };
+           if (min_dist_simpl->_L_strategy == Self) {
+               log_file << " ("<< min_dist_simpl->_diameter << "," << min_dist_simpl->_tolerance << ")" << endl;
+           };
+           if (min_dist_simpl->_L_strategy == Neighbours) {
+               log_file << " ("<< min_dist_simpl->_diameter << "," << min_dist_simpl->_tolerance << ")" << endl;
+           };
+       // };
 
        log_file.close();
     };
