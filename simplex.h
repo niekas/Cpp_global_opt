@@ -898,8 +898,8 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
             };
 
             // simpls[sid]->_min_lbs = simpls[sid]->find_accurate_lb_min_estimates(simpls[sid]->_verts, Simplex::glob_Ls);
-            // simpls[sid]->_min_lbs = simpls[sid]->find_one_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
-            simpls[sid]->_min_lbs = simpls[sid]->find_two_best_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
+            simpls[sid]->_min_lbs = simpls[sid]->find_one_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
+            // simpls[sid]->_min_lbs = simpls[sid]->find_two_best_vert_lb_mins(simpls[sid], Simplex::glob_Ls);
 
             simpls[sid]->_tolerance = simpls[sid]->_min_lbs[0]->_values[0];   // simpls[sid]->find_tolerance(pareto_front);
 
