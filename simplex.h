@@ -214,7 +214,7 @@ public:
             // Find best vert for this criteria 
             Point* min_vert = simpl->_verts[0];
             for (int j=0; j < simpl->_verts.size(); j++) {
-                simpl->_verts[j]->print();
+                // simpl->_verts[j]->print();
                 if (simpl->_verts[j]->_values[i] < min_vert->_values[i]) {
                     min_vert = simpl->_verts[j];
                 };
