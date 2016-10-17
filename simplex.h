@@ -123,7 +123,17 @@ public:
         //     E = 1e-8;
         // };
 
-        double glob_L_coef = 0.5;
+        double glob_L_coef = 1.;
+        if (_D == 2) {
+            glob_L_coef = 0.4;
+        };
+        if (_D == 3) {
+            glob_L_coef = 0.4 - 0.2/3.;
+        };
+        if (_D == 4) {
+            glob_L_coef = 0.4 - 0.4/3.;
+        };
+
 
         for (int i=0; i < funcs.size(); i++) {
             _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined

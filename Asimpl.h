@@ -320,55 +320,55 @@ public:
         };
 
 
-        // Update min_metric simplex here. It should be 
-        vector<Simplex*> simpls_near_glob_min;
-        for (int i=0; i < sorted_partition.size(); i++) {
-            // How to check weather point is in simplex?
-
-            for (int j=0; j < sorted_partition[i]->_verts.size(); j++) {
-                if (sorted_partition[i]->_verts[j] == _funcs[0]->_x_nearest_to_glob_x) {
-                    simpls_near_glob_min.push_back(sorted_partition[i]);
-                };
-            };
-        };
-
-        double min_dist = numeric_limits<int>::max();
-
-        Simplex* min_dist_simpl = 0;
-        for (int i=0; i < simpls_near_glob_min.size(); i++) {
-           Point* center = new Point(_funcs[0]->_D);
-           // Iterate through points
-           Simplex* simpl = simpls_near_glob_min[i];
-           for (int j=0; j < simpl->_verts.size(); j++) {
-               for (int c=0; c < simpl->_D; c++) {
-                    center->_X[c] += simpl->_verts[j]->_X[c];
-               };
-           };
-           // Divide by number of verts
-           for (int c=0; c < simpl->_D; c++) {
-               center->_X[c] /= simpl->_verts.size();
-           };
-           // Find distance and save smallest
-           double dist = l2norm(center, _funcs[0]->_glob_x);
-           // cout << dist << " < " << min_dist << " = "<< (dist < min_dist) << endl;
-           if (dist < min_dist) {
-               min_dist = dist;
-               min_dist_simpl = simpl;
-           };
-        };
-        // cout << "Min dist is " << min_dist << endl;
-
-        // Use convex-hull from min_dist_simplex group to biggest
-        if (min_dist_simpl != 0) {
-            for (int i=0; i < best_for_size.size(); i++) {
-                if (min_dist_simpl->_diameter == best_for_size[i]->_diameter) {
-                    min_metric_simplex = best_for_size[i];
-                };
-            };
-            // cout << min_metric_simplex->_diameter << " == " << min_dist_simpl->_diameter << endl;
-        };
-        _wanted = min_dist_simpl;
-        // cout << "Wanted diameter:" << min_metric_simplex->_diameter << endl;
+        // // Update min_metric simplex here. It should be 
+        // vector<Simplex*> simpls_near_glob_min;
+        // for (int i=0; i < sorted_partition.size(); i++) {
+        //     // How to check weather point is in simplex?
+        //
+        //     for (int j=0; j < sorted_partition[i]->_verts.size(); j++) {
+        //         if (sorted_partition[i]->_verts[j] == _funcs[0]->_x_nearest_to_glob_x) {
+        //             simpls_near_glob_min.push_back(sorted_partition[i]);
+        //         };
+        //     };
+        // };
+        //
+        // double min_dist = numeric_limits<int>::max();
+        //
+        // Simplex* min_dist_simpl = 0;
+        // for (int i=0; i < simpls_near_glob_min.size(); i++) {
+        //    Point* center = new Point(_funcs[0]->_D);
+        //    // Iterate through points
+        //    Simplex* simpl = simpls_near_glob_min[i];
+        //    for (int j=0; j < simpl->_verts.size(); j++) {
+        //        for (int c=0; c < simpl->_D; c++) {
+        //             center->_X[c] += simpl->_verts[j]->_X[c];
+        //        };
+        //    };
+        //    // Divide by number of verts
+        //    for (int c=0; c < simpl->_D; c++) {
+        //        center->_X[c] /= simpl->_verts.size();
+        //    };
+        //    // Find distance and save smallest
+        //    double dist = l2norm(center, _funcs[0]->_glob_x);
+        //    // cout << dist << " < " << min_dist << " = "<< (dist < min_dist) << endl;
+        //    if (dist < min_dist) {
+        //        min_dist = dist;
+        //        min_dist_simpl = simpl;
+        //    };
+        // };
+        // // cout << "Min dist is " << min_dist << endl;
+        //
+        // // Use convex-hull from min_dist_simplex group to biggest
+        // if (min_dist_simpl != 0) {
+        //     for (int i=0; i < best_for_size.size(); i++) {
+        //         if (min_dist_simpl->_diameter == best_for_size[i]->_diameter) {
+        //             min_metric_simplex = best_for_size[i];
+        //         };
+        //     };
+        //     // cout << min_metric_simplex->_diameter << " == " << min_dist_simpl->_diameter << endl;
+        // };
+        // _wanted = min_dist_simpl;
+        // // cout << "Wanted diameter:" << min_metric_simplex->_diameter << endl;
 
 
 
