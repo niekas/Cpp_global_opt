@@ -65,6 +65,8 @@ public:
     int _min_same_verts_to_be_neighbour;
     int _iteration;
 
+    Simplex* _wanted;
+
     void partition_feasable_region_combinatoricly() {
         int n = _funcs[0]->_D;
         int number_of_simpleces = 1;
@@ -317,6 +319,59 @@ public:
             };
         };
 
+
+        // Update min_metric simplex here. It should be 
+        vector<Simplex*> simpls_near_glob_min;
+        for (int i=0; i < sorted_partition.size(); i++) {
+            // How to check weather point is in simplex?
+
+            for (int j=0; j < sorted_partition[i]->_verts.size(); j++) {
+                if (sorted_partition[i]->_verts[j] == _funcs[0]->_x_nearest_to_glob_x) {
+                    simpls_near_glob_min.push_back(sorted_partition[i]);
+                };
+            };
+        };
+
+        double min_dist = numeric_limits<int>::max();
+
+        Simplex* min_dist_simpl = 0;
+        for (int i=0; i < simpls_near_glob_min.size(); i++) {
+           Point* center = new Point(_funcs[0]->_D);
+           // Iterate through points
+           Simplex* simpl = simpls_near_glob_min[i];
+           for (int j=0; j < simpl->_verts.size(); j++) {
+               for (int c=0; c < simpl->_D; c++) {
+                    center->_X[c] += simpl->_verts[j]->_X[c];
+               };
+           };
+           // Divide by number of verts
+           for (int c=0; c < simpl->_D; c++) {
+               center->_X[c] /= simpl->_verts.size();
+           };
+           // Find distance and save smallest
+           double dist = l2norm(center, _funcs[0]->_glob_x);
+           // cout << dist << " < " << min_dist << " = "<< (dist < min_dist) << endl;
+           if (dist < min_dist) {
+               min_dist = dist;
+               min_dist_simpl = simpl;
+           };
+        };
+        // cout << "Min dist is " << min_dist << endl;
+
+        // Use convex-hull from min_dist_simplex group to biggest
+        if (min_dist_simpl != 0) {
+            for (int i=0; i < best_for_size.size(); i++) {
+                if (min_dist_simpl->_diameter == best_for_size[i]->_diameter) {
+                    min_metric_simplex = best_for_size[i];
+                };
+            };
+            // cout << min_metric_simplex->_diameter << " == " << min_dist_simpl->_diameter << endl;
+        };
+        _wanted = min_dist_simpl;
+        // cout << "Wanted diameter:" << min_metric_simplex->_diameter << endl;
+
+
+
         vector<Simplex*> selected;
         if (min_metric_simplex == best_for_size[best_for_size.size()-1]) {
             selected.push_back(min_metric_simplex);
@@ -335,8 +390,10 @@ public:
                 double bias = b1 - slope * a1;
 
                 for (int i=0; i < best_for_size.size(); i++) {
-                    if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
-                        simplexes_below_line.push_back(best_for_size[i]);
+                    if (best_for_size[i]->_diameter >= a1) {  // Dont take into consideration smallel diameter simplices
+                        if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
+                            simplexes_below_line.push_back(best_for_size[i]);
+                        };
                     };
                 };
                 selected = convex_hull(simplexes_below_line);  // Messes up simplexes_below_line
@@ -626,6 +683,14 @@ public:
             //     cout << endl;
             // }
 
+            // if (_iteration > 16) {
+            // // if (_funcs[0]->_calls > 4) {
+            //     //// Draw partition in each iteration:
+            //     Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
+            //     FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+            //     pclose(testp);
+            // };
+
             // Divide seletected simplexes
             vector<Simplex*> new_simplexes = divide_simplexes(simplexes_to_divide);
 
@@ -635,13 +700,6 @@ public:
             //     exit(0);
             // };
 
-            // if (_iteration > 5300) {
-            if (_funcs[0]->_calls > 8000) {
-                //// Draw partition in each iteration:
-                Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
-                FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-                pclose(testp);
-            };
 
             //// Draw pareto front in each iteration:
             // Simplex::log_front(_pareto_front, simplexes_to_divide);
@@ -668,7 +726,7 @@ public:
 
             // Update counters and log the status
             _iteration += 1;
-            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min << endl;
+            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << endl;
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
