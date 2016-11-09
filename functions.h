@@ -551,7 +551,7 @@ public:
 
     bool is_accurate_enougth(){
         for (int i=0; i<_D; i++) {
-            if (_delta * (_ub->_X[i] - _lb->_X[i]) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
+            if (_delta * (1. - 0) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
                 return false;
             };
         };
