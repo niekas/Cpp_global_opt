@@ -473,7 +473,9 @@ public:
         _calls = 0;
         _f_min = numeric_limits<int>::max();
         _points = new PointTree(); // new Points();
-        _stopping_criteria = "x_dist";
+        // _stopping_criteria = "x_dist";
+        _stopping_criteria = "ei";
+        _expected_improvement = numeric_limits<double>::max();
     };
     string _name;
     string _stopping_criteria;
@@ -486,8 +488,10 @@ public:
     double _L;       // Global Lipschitz constant
 
     static bool _global_mem_allocated;
+    double _expected_improvement;
 
     int _calls;
+    double _glob_min_lb;
     double _f_min;  // Best known function value
     Point* _x_min;  // Point where best known function value is
     double _distance_to_glob_x;  // Infinity distance to _glob_x from nearest known point
@@ -611,6 +615,11 @@ public:
             // cout << endl;
             // cout << _delta << endl;
             return true;
+        } else if (_stopping_criteria == "ei") {
+            if (_expected_improvement <= 0.5) {
+                return true;
+            };
+            return false;
         } else if (_stopping_criteria == "pe0.01") {
             e = 0.01;
         } else if (_stopping_criteria == "pe1") {

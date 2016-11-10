@@ -328,6 +328,8 @@ public:
         double f_eps = 0; // 1e-16;
         double d_eps = 1e-8;
 
+        // Euklidinis atstumas nuo jau atlikto matavimo
+
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
@@ -785,7 +787,7 @@ public:
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
         Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
         Simplex::min_diameter = _partition[_partition.size()-1]->_diameter;
-        // Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
+        Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
 
         while (_funcs[0]->_calls <= _max_calls && _duration <= _max_duration && !is_accurate_enough()) { // _func->pe() > _min_pe){
             log_file.open("log/evaluations.txt", ios::app);
@@ -845,11 +847,11 @@ public:
             // Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::min_diameter = _partition[0]->_diameter;
-            // Simplex::update_estimates(_partition, _funcs, _pareto_front, _iteration);
+            Simplex::update_estimates(_partition, _funcs, _pareto_front, _iteration);
 
             // Update counters and log the status
             _iteration += 1;
-            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min << " min_diam: " << Simplex::min_diameter << " glob_L: " << Simplex::glob_Ls[0] << endl;
+            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min << " min_diam: " << Simplex::min_diameter << " glob_L: " << Simplex::glob_Ls[0] << " ei: " << funcs[0]->_expected_improvement << endl;
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
