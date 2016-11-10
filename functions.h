@@ -467,8 +467,13 @@ public:
         _calls = 0;
         _f_min = numeric_limits<int>::max();
         _points = new PointTree(); // new Points();
+        // _stopping_criteria = "ei";
+        _stopping_criteria = "x_dist";
+        _expected_improvement = numeric_limits<double>::max();
     };
     string _name;
+    string _stopping_criteria;
+    double _expected_improvement;
     int _D;
     Point* _lb;
     Point* _ub;
@@ -552,10 +557,18 @@ public:
     };
 
     bool is_accurate_enougth(){
-        for (int i=0; i<_D; i++) {
-            if (_delta * (1. - 0.) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
-                return false;
+        double e;
+        if (_stopping_criteria == "x_dist") {
+            for (int i=0; i<_D; i++) {
+                if (_delta * (1. - 0.) < fabs(_x_nearest_to_glob_x->_X[i] - _glob_x->_X[i])) { // Infinity norm
+                    return false;
+                };
             };
+        } else if (_stopping_criteria == "ei") {
+            if (_expected_improvement <= 0.02) {
+                return true;
+            };
+            return false;
         };
         return true; 
     };

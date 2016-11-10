@@ -532,7 +532,7 @@ public:
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
         Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
         Simplex::min_diameter = _partition[_partition.size()-1]->_diameter;
-        // Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
+        Simplex::update_estimates(_partition, _funcs, _pareto_front, 0);
 
         _f_min_prev = funcs[0]->_f_min;
 
@@ -591,7 +591,7 @@ public:
             // Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::min_diameter = _partition[0]->_diameter;
-            // Simplex::update_estimates(_partition, _funcs, _pareto_front, _iteration);
+            Simplex::update_estimates(_partition, _funcs, _pareto_front, _iteration);
 
 
             if (_funcs[0]->_f_min <= _f_min_prev - 0.01 * fabs(_f_min_prev)) {

@@ -17,8 +17,9 @@ int main(int argc, char* argv[]) {
     const struct option longopts[] = {
         {"func_cls", required_argument, 0, 'c'},
         {"func_id", required_argument, 0, 'f'},
-        {"task_id", required_argument, 0, 't'},
-        {"callback", required_argument, 0, 'b'},
+        {"stop_crit", optional_argument, 0, 's'},
+        {"task_id", optional_argument, 0, 't'},
+        {"callback", optional_argument, 0, 'b'},
         {"max_duration", optional_argument, 0, 'd'},
         {"max_calls", optional_argument, 0, 'i'},
         {"glob_L", optional_argument, 0, 'g'},
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
     int cls;
     int fid;
     int task_id;
+    char* stop_crit = {'\0'};
     char* callback = {'\0'};
     int max_calls = 200000;
     int max_duration = 3600*24;
@@ -34,13 +36,16 @@ int main(int argc, char* argv[]) {
     int opt_id;
     int iarg = 0;
     while(iarg != -1) {
-        iarg = getopt_long(argc, argv, "cftbdig", longopts, &opt_id);
+        iarg = getopt_long(argc, argv, "csftbdig", longopts, &opt_id);
         switch (iarg) {
             case 'c':
                 cls = strtoul(optarg, 0, 0);
                 break;
             case 'f':
                 fid = strtoul(optarg, 0, 0);
+                break;
+            case 's':
+                stop_crit = strdup(optarg);
                 break;
             case 't':
                 task_id = strtoul(optarg, 0, 0);
@@ -63,6 +68,9 @@ int main(int argc, char* argv[]) {
     // Put function vector in order to be able to use more than 2 functions in the future
     vector<Function*> funcs;
     funcs.push_back(new GKLSFunction(cls, fid));
+    if (stop_crit != '\0') {
+        funcs[0]->_stopping_criteria = stop_crit;
+    };
 
     Asimpl* alg;
     alg = new Asimpl(max_calls, max_duration);
