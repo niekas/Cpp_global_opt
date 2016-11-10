@@ -726,7 +726,7 @@ public:
 
             // Update counters and log the status
             _iteration += 1;
-            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << endl;
+            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << " globL: " << Simplex::glob_Ls[0] << " ei: " << _funcs[0]->_expected_improvement << endl;
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;

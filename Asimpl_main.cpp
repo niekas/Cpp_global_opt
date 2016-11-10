@@ -77,6 +77,9 @@ int main(int argc, char* argv[]) {
         funcs.push_back(func);
     } else {
         funcs.push_back(new GKLSFunction(cls, fid));
+        if (stop_crit != '\0') {
+            funcs[0]->_stopping_criteria = stop_crit;
+        };
     };
 
     Asimpl* alg;
