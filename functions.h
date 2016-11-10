@@ -616,9 +616,18 @@ public:
             // cout << _delta << endl;
             return true;
         } else if (_stopping_criteria == "ei") {
-            if (_expected_improvement <= 0.5) {
+            if (_expected_improvement <= 0.02) {
                 return true;
             };
+            // if ((_D == 2) and (_expected_improvement <= 0.3)) {
+            //     return true;
+            // };
+            // if ((_D == 3) and (_expected_improvement <= 0.5)) {
+            //     return true;
+            // };
+            // if ((_D == 4) and (_expected_improvement <= 0.7)) {
+            //     return true;
+            // };
             return false;
         } else if (_stopping_criteria == "pe0.01") {
             e = 0.01;
