@@ -186,6 +186,8 @@ public:
         vector<double> diameters;
         vector<Simplex*> best_for_size;
 
+        double d_eps = 1e-8;
+
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
@@ -193,7 +195,9 @@ public:
             // Saves unique diameters
             unique_diameter = true;
             for (int j=0; j < diameters.size(); j++) {
-                if (diameters[j] == sorted_partition[i]->_diameter) {
+                // if (diameters[j] == sorted_partition[i]->_diameter) {
+                if ((diameters[j] <= sorted_partition[i]->_diameter + d_eps) and
+                    (diameters[j] >= sorted_partition[i]->_diameter - d_eps)) {
                     unique_diameter = false; break;
                 };
             };
@@ -204,7 +208,9 @@ public:
             // If this simplex is better then previous with same size swap them.
             found_with_same_size = false;
             for (int j=0; j < best_for_size.size(); j++) {
-                if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
+                // if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
+                if ((best_for_size[j]->_diameter <= sorted_partition[i]->_diameter + d_eps) and
+                    (best_for_size[j]->_diameter >= sorted_partition[i]->_diameter - d_eps)) {
                     found_with_same_size = true;
                     if (best_for_size[j]->_min_lb_value > sorted_partition[i]->_min_lb_value) {
                         best_for_size.erase(best_for_size.begin()+j);
@@ -336,7 +342,9 @@ public:
         // Select all simplexes which have best _min_vert_value for its size 
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
+                if ((sorted_partition[i]->_diameter >= selected[j]->_diameter - d_eps) and
+                    (sorted_partition[i]->_diameter <= selected[j]->_diameter + d_eps) &&
+                // if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
                     (sorted_partition[i]->_min_lb_value == selected[j]->_min_lb_value)) {
                     selected_simplexes.push_back(sorted_partition[i]);
                 };
@@ -611,7 +619,7 @@ public:
 
             // Update counters and log the status
             _iteration += 1;
-            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min << " min_diam: " << Simplex::min_diameter << " max_diam: " << Simplex::max_diameter << " glob_L: " << Simplex::glob_Ls[0] << endl;
+            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min << " min_diam: " << Simplex::min_diameter << " max_diam: " << Simplex::max_diameter << " glob_L: " << Simplex::glob_Ls[0] << "  ei: " << _funcs[0]->_expected_improvement << endl;
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
