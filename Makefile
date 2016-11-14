@@ -7,8 +7,8 @@ compile:
 
 run: compile
 	clear
-	./asimpl.out --func_cls=6 --func_id=1 --stop_crit=ei
-	
+	./asimpl.out --func_cls=1 --func_id=1   # --stop_crit=ei
+
 
 test:
 	g++ test.cpp -o test.out

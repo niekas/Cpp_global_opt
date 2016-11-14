@@ -72,9 +72,13 @@ public:
     static vector<double> glob_Ls;
     static bool glob_L_was_updated;
     static double max_diameter;
+    static double glob_L_coef;
+    static double local_L_coef;
 
-    vector<double> _Ls;          // Cumulative estimates of Lipschitz constants for each criteria
-    vector<double> _grad_norms;  // Lipschitz constant estimate calculated by Simplex Gradient Euclidean norm.
+    // vector<double> _Ls;          // Cumulative estimates of Lipschitz constants for each criteria
+    vector<double> _local_Ls;          // Cumulative estimates of Lipschitz constants for each criteria
+    // vector<double> _grad_norms;  // Lipschitz constant estimate calculated by Simplex Gradient Euclidean norm.
+    vector<double> _simpl_Ls;  // Lipschitz constant estimate calculated by Simplex Gradient Euclidean norm.
 
     Point* _min_vert;   // Pointer to vertex with lowest function value 
     // double _min_vert_value;  // _min_vert function value 
@@ -90,8 +94,8 @@ public:
         _D = _verts.size() - 1;
         _C = funcs.size();
         for (int i=0; i < _C; i++) {
-            _Ls.push_back(0);
-            _grad_norms.push_back(0);
+            _local_Ls.push_back(0.);
+            _simpl_Ls.push_back(0.);
         };
         
         // Note: claculating metrics needed by algorithm here would reduce calculations
@@ -123,27 +127,16 @@ public:
         //     E = 1e-8;
         // };
 
-        // double glob_L_coef = 1.;
-        // if (_D == 2) {
-        double glob_L_coef = 0.4;
-        // };
-        // if (_D == 3) {
-        //     glob_L_coef = 0.4 - 0.2/3.;
-        // };
-        // if (_D == 4) {
-        //     glob_L_coef = 0.4 - 0.4/3.;
-        // };
-
 
         for (int i=0; i < funcs.size(); i++) {
-            _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
+            _simpl_Ls[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
 
            //// Update global Ls
            if (Simplex::glob_Ls.size() < funcs.size()) {
-               Simplex::glob_Ls.push_back(_grad_norms[i]);
+               Simplex::glob_Ls.push_back(_simpl_Ls[i]);
            } else {
-               if (Simplex::glob_Ls[i] < glob_L_coef * _grad_norms[i]) {
-                   Simplex::glob_Ls[i] = glob_L_coef * _grad_norms[i];
+               if (Simplex::glob_Ls[i] < Simplex::glob_L_coef * _simpl_Ls[i]) {
+                   Simplex::glob_Ls[i] = Simplex::glob_L_coef * _simpl_Ls[i];
                    Simplex::glob_L_was_updated = true;
                };
            };
@@ -155,7 +148,7 @@ public:
                 _min_vert = _verts[i];
             };
         };
-        // ToDo: _grad_norms - is not representative title, should be renamed
+        // ToDo: _simpl_Ls - is not representative title, should be renamed
         // to mark that these are Lipschitz constant estimates for this simplex.
     };
 
@@ -218,9 +211,10 @@ public:
         return lb_mins;
     };
 
-    vector<Point*> find_one_vert_lb_mins(Simplex* simpl, vector<double> Ls) {
+    vector<Point*> find_one_vert_lb_mins(Simplex* simpl, vector<double> glob_Ls) {
         vector<Point*> lb_mins;
-        for (int i=0; i < Ls.size(); i++) {    // Iterate through criterias
+
+        for (int i=0; i < _C; i++) {    // Iterate through criterias
             // Find best vert for this criteria 
             Point* min_vert = simpl->_verts[0];
             for (int j=0; j < simpl->_verts.size(); j++) {
@@ -230,7 +224,7 @@ public:
                 };
             };
 
-            double L = Ls[i];
+            double L = simpl->_local_Ls[i];
             double lb_value = min_vert->_values[i] - L * simpl->_diameter;
             // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
 
@@ -424,13 +418,13 @@ public:
 
     void print(){
         cout << " Simplex   diam:  " << _diameter << "   tol:  " << _tolerance;
-        cout << "   L:  ";
-        for (int i=0; i < _D; i++) {
-            cout << _Ls[i] << " ";
+        cout << "   local-L:  ";
+        for (int i=0; i < _C; i++) {
+            cout << _local_Ls[i] << " ";
         };
-        cout << "   grad_norm:  ";
-        for (int i=0; i < _D; i++) {
-            cout << _grad_norms[i] << " ";
+        cout << "   simpl-L: ";
+        for (int i=0; i < _C; i++) {
+            cout << _simpl_Ls[i] << " ";
         };
         cout << endl;
         for (int i=0; i < _verts.size(); i++){
@@ -624,6 +618,8 @@ public:
 vector<double> Simplex::glob_Ls;
 bool Simplex::glob_L_was_updated = false;
 double Simplex::max_diameter = numeric_limits<double>::max();
+double Simplex::glob_L_coef = 0.4;
+double Simplex::local_L_coef = 0.4;
 
 
 void Point::_neighbours_estimates_should_be_updated() {
@@ -664,10 +660,10 @@ void Point::_neighbours_estimates_should_be_updated() {
 //     SimplexTree& operator=(const SimplexTree& other){}
 // public:
 //     SimplexTree(){
-//          _max_grad_norm = -numeric_limits<double>::max();
+//          _max_simpl_Ls = -numeric_limits<double>::max();
 //          _tree_root = 0;
 //     };
-//     double _max_grad_norm;
+//     double _max_simpl_Ls;
 //     SimplexTreeNode* _tree_root;
 //
 //     void update_height(SimplexTreeNode* node) {
@@ -808,9 +804,9 @@ void Point::_neighbours_estimates_should_be_updated() {
 //
 //         // Get same point or insert given (if inserted returns 0)
 //         SimplexTreeNode* node = _tree_root;
-//         double grad_norm = value->_grad_norm;
-//         if (grad_norm > _max_grad_norm) {
-//             _max_grad_norm = grad_norm;
+//         double grad_norm = value->_simpl_Ls;
+//         if (grad_norm > _max_simpl_Ls) {
+//             _max_simpl_Ls = grad_norm;
 //         };
 //         if (_tree_root == 0) {  // Create first tree node
 //             _tree_root = new SimplexTreeNode(value);
@@ -881,25 +877,26 @@ void Point::_neighbours_estimates_should_be_updated() {
 void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs, vector<Point*> pareto_front, int iteration) {   // Neighbours strategy - updates estimates
     for (int sid=0; sid < simpls.size(); sid++) {
         if (simpls[sid]->_should_estimates_be_updated or Simplex::glob_L_was_updated) {
-            //// Use simplex's \hat{L} as initial max_grad_norms value
-            // vector<double> max_grad_norms;
-            // for (int i=0; i < simpls[sid]->_grad_norms.size(); i++) {
-            //     max_grad_norms.push_back(simpls[sid]->_grad_norms[i]);
-            // };
-            //
-            //// Find max \hat{L} among neighbours
-            // for (list<Simplex*>::iterator it=simpls[sid]->_neighbours.begin(); it != simpls[sid]->_neighbours.end(); ++it) {
-            //     for (int i=0; i < funcs.size(); i++) {
-            //         if ((*it)->_grad_norms[i] > max_grad_norms[i]) {
-            //             max_grad_norms[i] = (*it)->_grad_norms[i];
-            //         };
-            //     };
-            // };
+            //// Use simplex's \hat{L} as initial max_simpl_Ls value
+            vector<double> max_simpl_Ls;
+            for (int i=0; i < simpls[sid]->_simpl_Ls.size(); i++) {
+                max_simpl_Ls.push_back(simpls[sid]->_simpl_Ls[i]);
+            };
+
+            // Find max \hat{L} among neighbours
+            for (list<Simplex*>::iterator it=simpls[sid]->_neighbours.begin(); it != simpls[sid]->_neighbours.end(); ++it) {
+                for (int i=0; i < funcs.size(); i++) {
+                    if ((*it)->_simpl_Ls[i] > max_simpl_Ls[i]) {
+                        max_simpl_Ls[i] = (*it)->_simpl_Ls[i];
+                    };
+                };
+            };
 
             // Update simplex's L
             for (int i=0; i < funcs.size(); i++) {
-                // simpls[sid]->_Ls[i] = max_grad_norms[i];
-                simpls[sid]->_Ls[i] = simpls[sid]->_grad_norms[i];
+                simpls[sid]->_local_Ls[i] = max_simpl_Ls[i];
+                simpls[sid]->_local_Ls[i] = Simplex::local_L_coef * simpls[sid]->_local_Ls[i];
+                // simpls[sid]->_local_Ls[i] = simpls[sid]->_simpl_Ls[i];
             };
 
             //// Find accurate lower bound point and value estimates with given precision
@@ -920,7 +917,7 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
 
 
     // Update expected improvement
-    double L = Simplex::glob_Ls[0] / 0.4;
+    double L = Simplex::glob_Ls[0];
     
     double min_min_lb = numeric_limits<double>::max();
     Simplex* s;

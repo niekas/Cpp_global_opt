@@ -1,16 +1,5 @@
 #ifndef ASIMPL_H
 #define ASIMPL_H 
-// This algorithm uses convex-hull strategy:
-//      [>] divide convex hull from best lb value to biggest (best two values lb, dist between verts)
-//      [+]   ---- || ----   (best two values lb, simplex diameter)
-//      [+]   stairs ---- || ----   (best two values lb, dist between verts)
-//      [ ]   ---- || ----   (longest edge lb)
-//      [ ] different convex hull: from best function value simplex.
-//
-//      [ ] divide only with best lb value
-//      [ ] divide with best lb value plus biggest
-//      [ ] divide from best function value
-//      [ ] divide from best func value/diameter value
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -131,9 +120,9 @@ public:
             cout << " Simplex: ";
             cout << _partition[sid];
             cout << "("; 
-            for (int i=0; i < _partition[sid]->_Ls.size(); i++) {
-                cout << _partition[sid]->_Ls[i];
-                if (i != _partition[sid]->_Ls.size() - 1) {
+            for (int i=0; i < _partition[sid]->_local_Ls.size(); i++) {
+                cout << _partition[sid]->_local_Ls[i];
+                if (i != _partition[sid]->_local_Ls.size() - 1) {
                     cout << ",";
                 };
             };
@@ -152,31 +141,30 @@ public:
     };
 
     bool are_neighbours(Simplex* s1, Simplex* s2) {
-        // vector<Point*> same_verts(s1->_verts.size() + s2->_verts.size());
-        // vector<Point*>::iterator it;
-        //
-        // vector<Point*> s1_verts = s1->_verts;
-        // vector<Point*> s2_verts = s2->_verts;
-        //
-        //
-        // sort(s1_verts.begin(), s1_verts.end());
-        // sort(s2_verts.begin(), s2_verts.end());
-        // it = set_intersection(s1_verts.begin(), s1_verts.end(), s2_verts.begin(), s2_verts.end(), same_verts.begin());
-        //
-        // int same_verts_count = it - same_verts.begin();
-        // int diff_verts_count = s1_verts.size() - same_verts_count;
-        //
-        // same_verts.clear();
-        // s1_verts.clear();
-        // s2_verts.clear();
-        //
-        // if (same_verts_count >= _min_same_verts_to_be_neighbour) {
+        vector<Point*> same_verts(s1->_verts.size() + s2->_verts.size());
+        vector<Point*>::iterator it;
+
+        vector<Point*> s1_verts = s1->_verts;
+        vector<Point*> s2_verts = s2->_verts;
+
+        sort(s1_verts.begin(), s1_verts.end());
+        sort(s2_verts.begin(), s2_verts.end());
+        it = set_intersection(s1_verts.begin(), s1_verts.end(), s2_verts.begin(), s2_verts.end(), same_verts.begin());
+
+        int same_verts_count = it - same_verts.begin();
+        int diff_verts_count = s1_verts.size() - same_verts_count;
+
+        same_verts.clear();
+        s1_verts.clear();
+        s2_verts.clear();
+
+        if (same_verts_count >= _min_same_verts_to_be_neighbour) {
+            return true;
+        };
+
+        // if (diff_verts_count <= _max_diff_verts_to_be_neighbour) {
         //     return true;
         // };
- 
-        //// if (diff_verts_count <= _max_diff_verts_to_be_neighbour) {
-        ////     return true;
-        //// };
         return false;
     };
 
@@ -319,59 +307,6 @@ public:
             };
         };
 
-
-        // // Update min_metric simplex here. It should be 
-        // vector<Simplex*> simpls_near_glob_min;
-        // for (int i=0; i < sorted_partition.size(); i++) {
-        //     // How to check weather point is in simplex?
-        //
-        //     for (int j=0; j < sorted_partition[i]->_verts.size(); j++) {
-        //         if (sorted_partition[i]->_verts[j] == _funcs[0]->_x_nearest_to_glob_x) {
-        //             simpls_near_glob_min.push_back(sorted_partition[i]);
-        //         };
-        //     };
-        // };
-        //
-        // double min_dist = numeric_limits<int>::max();
-        //
-        // Simplex* min_dist_simpl = 0;
-        // for (int i=0; i < simpls_near_glob_min.size(); i++) {
-        //    Point* center = new Point(_funcs[0]->_D);
-        //    // Iterate through points
-        //    Simplex* simpl = simpls_near_glob_min[i];
-        //    for (int j=0; j < simpl->_verts.size(); j++) {
-        //        for (int c=0; c < simpl->_D; c++) {
-        //             center->_X[c] += simpl->_verts[j]->_X[c];
-        //        };
-        //    };
-        //    // Divide by number of verts
-        //    for (int c=0; c < simpl->_D; c++) {
-        //        center->_X[c] /= simpl->_verts.size();
-        //    };
-        //    // Find distance and save smallest
-        //    double dist = l2norm(center, _funcs[0]->_glob_x);
-        //    // cout << dist << " < " << min_dist << " = "<< (dist < min_dist) << endl;
-        //    if (dist < min_dist) {
-        //        min_dist = dist;
-        //        min_dist_simpl = simpl;
-        //    };
-        // };
-        // // cout << "Min dist is " << min_dist << endl;
-        //
-        // // Use convex-hull from min_dist_simplex group to biggest
-        // if (min_dist_simpl != 0) {
-        //     for (int i=0; i < best_for_size.size(); i++) {
-        //         if (min_dist_simpl->_diameter == best_for_size[i]->_diameter) {
-        //             min_metric_simplex = best_for_size[i];
-        //         };
-        //     };
-        //     // cout << min_metric_simplex->_diameter << " == " << min_dist_simpl->_diameter << endl;
-        // };
-        // _wanted = min_dist_simpl;
-        // // cout << "Wanted diameter:" << min_metric_simplex->_diameter << endl;
-
-
-
         vector<Simplex*> selected;
         if (min_metric_simplex == best_for_size[best_for_size.size()-1]) {
             selected.push_back(min_metric_simplex);
@@ -489,15 +424,6 @@ public:
         vector<Simplex*> divided_simplexes;
         if (strategy== "longest_half") {
             // Find middle point
-
-            // if (_iteration == 199) {
-            //     cout << "It" << _iteration << endl;
-            //     simplex->_le_v1->print();
-            //     simplex->_le_v2->print();
-            //     simplex->print();
-            //     cout << " ---- " << endl;
-            // };
-                
             int n = _funcs[0]->_D;
             double c[n];
             for (int i=0; i < n; i++) {
@@ -560,16 +486,6 @@ public:
             };
 
             simplex->_is_in_partition = false;
-
-            //     cout << "It" << _iteration << endl;
-            //     simplex->_le_v1->print();
-            //     simplex->_le_v2->print();
-            //     simplex->print();
-            //     cout << " -- " << endl;
-            //     left_simplex->print();
-            //     right_simplex->print();
-            //     cout << " ---- " << endl;
-            // };
 
             divided_simplexes.push_back(left_simplex);
             divided_simplexes.push_back(right_simplex);
@@ -686,9 +602,9 @@ public:
             // if (_iteration > 16) {
             // // if (_funcs[0]->_calls > 4) {
             //     //// Draw partition in each iteration:
-            //     Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
-            //     FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-            //     pclose(testp);
+                // Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
+                // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+                // pclose(testp);
             // };
 
             // Divide seletected simplexes
@@ -727,6 +643,19 @@ public:
             // Update counters and log the status
             _iteration += 1;
             cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << " globL: " << Simplex::glob_Ls[0] << " ei: " << _funcs[0]->_expected_improvement << endl;
+            // if (_iteration == 4) {
+            //     for (int i=0; i < _partition.size() ;i++) {
+            //         // cout << endl <<#<{(|   |)}>#"Local L:" << _partition[i]->_simpl_Ls[0] << endl;
+            //         _partition[i]->print();
+            //
+            //     };
+            //     // print_neighbours();
+            //     // print_neighbours();
+            //     // Simplex::log_partition(_partition, simplexes_to_divide, _funcs);
+            //     // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+            //     // pclose(testp);
+            //     exit(0);
+            // };
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
@@ -737,8 +666,6 @@ public:
         } else {
             _status = "S";
         };
-
-        // Draw partitioning: output simplex coordinates to file and draw it with Python
     };
 
     virtual ~Asimpl(){};
