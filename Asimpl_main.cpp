@@ -24,6 +24,8 @@ int main(int argc, char* argv[]) {
         {"max_duration", optional_argument, 0, 'd'},
         {"max_calls", optional_argument, 0, 'i'},
         {"glob_L", optional_argument, 0, 'g'},
+        {"local_L_coef", optional_argument, 0, 'l'},
+        {"glob_L_coef", optional_argument, 0, 'o'},
     };
     int cls;
     int fid;
@@ -34,11 +36,13 @@ int main(int argc, char* argv[]) {
     int max_calls = 40000;
     int max_duration = 2*3600;
     double glob_L = numeric_limits<double>::max();
+    double local_L_coef = numeric_limits<double>::max();
+    double glob_L_coef = numeric_limits<double>::max();
 
     int opt_id;
     int iarg = 0;
     while(iarg != -1) {
-        iarg = getopt_long(argc, argv, "cnsftbdig", longopts, &opt_id);
+        iarg = getopt_long(argc, argv, "cnsftbdiglo", longopts, &opt_id);
         switch (iarg) {
             case 'c':
                 cls = strtoul(optarg, 0, 0);
@@ -67,6 +71,12 @@ int main(int argc, char* argv[]) {
             case 'g':
                 glob_L = strtod(optarg, '\0');
                 break;
+            case 'l':
+                local_L_coef = strtod(optarg, '\0');
+                break;
+            case 'o':
+                glob_L_coef = strtod(optarg, '\0');
+                break;
         };
     };
 
@@ -87,6 +97,12 @@ int main(int argc, char* argv[]) {
 
     if (glob_L != numeric_limits<double>::max()) {
         Simplex::glob_Ls.push_back(glob_L);
+    };
+    if (local_L_coef != numeric_limits<double>::max()) {
+        Simplex::local_L_coef = local_L_coef;
+    };
+    if (glob_L_coef != numeric_limits<double>::max()) {
+        Simplex::glob_L_coef = glob_L_coef;
     };
 
     alg->minimize(funcs);
