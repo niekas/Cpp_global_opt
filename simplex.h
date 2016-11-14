@@ -916,20 +916,20 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
     Simplex::glob_L_was_updated = false;
 
 
-    // Update expected improvement
-    double L = Simplex::glob_Ls[0];
-    
-    double min_min_lb = numeric_limits<double>::max();
-    Simplex* s;
-    for (int sid=0; sid < simpls.size(); sid++) {
-        if (simpls[sid]->_min_lbs[0]->_values[0] < min_min_lb) {
-            min_min_lb = simpls[sid]->_min_vert->_values[0] - L * simpls[sid]->_diameter;
-            // min_min_lb = simpls[sid]->_min_lbs[0]->_values[0];
-            s = simpls[sid];
-        };
-    };
-    // double prev_ei = funcs[0]->_expected_improvement;
-    funcs[0]->_expected_improvement = funcs[0]->_f_min - min_min_lb;
+    //// Update expected improvement
+    // double L = Simplex::glob_Ls[0];
+    //
+    // double min_min_lb = numeric_limits<double>::max();
+    // Simplex* s;
+    // for (int sid=0; sid < simpls.size(); sid++) {
+    //     if (simpls[sid]->_min_lbs[0]->_values[0] < min_min_lb) {
+    //         min_min_lb = simpls[sid]->_min_vert->_values[0] - L * simpls[sid]->_diameter;
+    //         // min_min_lb = simpls[sid]->_min_lbs[0]->_values[0];
+    //         s = simpls[sid];
+    //     };
+    // };
+    // funcs[0]->_expected_improvement = funcs[0]->_f_min - min_min_lb;
+
 
     // Note: gali būti, kad slope apibrėžimas pas mane netinkamas atmetant
     // simpleksus su epsilon (potencialiai optimalių simpleksų parinkimo metu).

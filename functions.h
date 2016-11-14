@@ -1250,8 +1250,8 @@ public:
     };
 
     double value(Point* point) {
-        GKLS_free();
-        assert(GKLS_arg_generate(_fid) == GKLS_OK);   // Needed for multicriteria problems. Slows down function evaluations.
+        // GKLS_free();
+        // assert(GKLS_arg_generate(_fid) == GKLS_OK);   // Needed for multicriteria problems. Slows down function evaluations.
         double transformed_point[_D];
         for (int i=0; i<_D; i++){
             transformed_point[i] = transform(point,i);
