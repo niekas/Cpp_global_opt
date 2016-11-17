@@ -535,7 +535,7 @@ public:
                min_dist_simpl = simpl;
            };
        };
-       cout << "Min dist is: " << min_dist << endl;
+       // cout << "Min dist is: " << min_dist << endl;
 
        // cout << simpls_near_glob_min.size() << endl;
 
@@ -887,6 +887,7 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
             for (list<Simplex*>::iterator it=simpls[sid]->_neighbours.begin(); it != simpls[sid]->_neighbours.end(); ++it) {
                 for (int i=0; i < funcs.size(); i++) {
                     if ((*it)->_simpl_Ls[i] > max_simpl_Ls[i]) {
+                    // if (((*it)->_simpl_Ls[i] > max_simpl_Ls[i]) and (simpls[sid]->_diameter <= (*it)->_diameter)) {
                         max_simpl_Ls[i] = (*it)->_simpl_Ls[i];
                     };
                 };
