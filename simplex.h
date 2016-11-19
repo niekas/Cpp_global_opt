@@ -137,7 +137,7 @@ public:
         //     E = 1e-8;
         // };
 
-        double glob_L_coef = 1.0;
+        double glob_L_coef = 0.4;
 
         for (int i=0; i < funcs.size(); i++) {
             _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
