@@ -41,6 +41,7 @@ public:
         _le_v1 = 0;
         _le_v2 = 0;
         _min_vert = 0;
+        _min_vert_longest_edge_len = 0;
         // _max_vert = 0;
         // _max_vert_value = -numeric_limits<double>::max();
         // _min_vert_value = numeric_limits<double>::max();
@@ -63,6 +64,7 @@ public:
     bool _is_in_partition;
     bool _should_be_divided;  // Should be divided in next iteration
     bool _should_estimates_be_updated;   // Should Lipschitz constant estimate and its lower bound be updated
+    double _min_vert_longest_edge_len;
     list<Simplex*> _neighbours;
 
     Point* _le_v1;      // Longest edge vertex1
@@ -99,6 +101,13 @@ public:
         // Sorts vertexes using first criteria values
         sort(_verts.begin(), _verts.end(), Point::compare_by_value);  // Is there calculation of intersection anywhere in the algorithm, in this case sorting by adress is needed?
 
+        _min_vert = _verts[0];
+        for (int i=0; i < _verts.size(); i++) {
+            if (_verts[i]->_values[0] < _min_vert->_values[0]) {
+                _min_vert = _verts[i];
+            };
+        };
+
         // Find longest edge length and verts
         double edge_length;  // Temporary variable
         for (int a=0; a < _verts.size(); a++) {
@@ -110,6 +119,11 @@ public:
                         _diameter = edge_length;
                         _le_v1 = _verts[a];
                         _le_v2 = _verts[b];
+                    };
+                    if ((_verts[a] == _min_vert) or (_verts[b] == _min_vert)) {
+                        if (edge_length > _min_vert_longest_edge_len) {
+                            _min_vert_longest_edge_len = edge_length;
+                        };
                     };
                 };
             };
@@ -123,17 +137,7 @@ public:
         //     E = 1e-8;
         // };
 
-        // double glob_L_coef = 1.;
-        // if (_D == 2) {
-        double glob_L_coef = 0.4;
-        // };
-        // if (_D == 3) {
-        //     glob_L_coef = 0.4 - 0.2/3.;
-        // };
-        // if (_D == 4) {
-        //     glob_L_coef = 0.4 - 0.4/3.;
-        // };
-
+        double glob_L_coef = 1.0;
 
         for (int i=0; i < funcs.size(); i++) {
             _grad_norms[i] = find_simplex_gradient_norm(i, _simplex_gradient_strategy);      // Check in the article if global Lipschitz constant is defined
@@ -149,12 +153,8 @@ public:
            };
         };
 
-        _min_vert = _verts[0];
-        for (int i=0; i < _verts.size(); i++) {
-            if (_verts[i]->_values[0] < _min_vert->_values[0]) {
-                _min_vert = _verts[i];
-            };
-        };
+
+
         // ToDo: _grad_norms - is not representative title, should be renamed
         // to mark that these are Lipschitz constant estimates for this simplex.
     };
@@ -231,7 +231,10 @@ public:
             };
 
             double L = Ls[i];
-            double lb_value = min_vert->_values[i] - L * simpl->_diameter;
+
+            // double lb_value = min_vert->_values[i] - L * simpl->_diameter;
+            double lb_value = min_vert->_values[i] - L * simpl->_min_vert_longest_edge_len;
+
             // cout << lb_value << " = " << min_vert->_values[i] << " - " << L << " * " << simpl->_diameter;
 
             Point* lb_min = new Point(simpl->_D);
