@@ -668,7 +668,7 @@ public:
         while (_funcs[0]->_calls <= _max_calls && _duration <= _max_duration && !is_accurate_enough()) { // _func->pe() > _min_pe){
             // Selects simplexes to divide
             vector<Simplex*> simplexes_to_divide;
-            if (_iteration == 0) {
+            if (_iteration <= 2) {
                 simplexes_to_divide = _partition;
             } else {
                 simplexes_to_divide = select_simplexes_to_divide();
