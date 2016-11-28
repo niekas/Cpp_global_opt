@@ -571,7 +571,7 @@ public:
             };
             return true;
         } else if (_stopping_criteria == "ei") {
-            if (_expected_improvement <= 0.02) {
+            if (_expected_improvement <= 0.0001) {
                 return true;
             };
             return false;
