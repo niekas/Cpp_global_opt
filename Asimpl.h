@@ -642,7 +642,8 @@ public:
 
             // Update counters and log the status
             _iteration += 1;
-            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << " globL: " << Simplex::glob_Ls[0] << " ei: " << _funcs[0]->_expected_improvement << endl;
+            // cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "   dist to glob: " << _funcs[0]->_distance_to_glob_x << " globL: " << Simplex::glob_Ls[0] << " ei: " << _funcs[0]->_expected_improvement << " best-simpl-diam: " <<  _funcs[0]->_expected_improvement_simpl->_diameter << endl;
+            cout << _iteration << ". Simplexes: " << _partition.size() << "  calls: " << _funcs[0]->_calls << "  f_min:" << _funcs[0]->_f_min <<  "  min diam: " << _partition[0]->_diameter << " globL: " << Simplex::glob_Ls[0] << " ei: " << _funcs[0]->_expected_improvement << " best-simpl-diam: " <<  _funcs[0]->_expected_improvement_simpl->_diameter << endl;
             // if (_iteration == 4) {
             //     for (int i=0; i < _partition.size() ;i++) {
             //         // cout << endl <<#<{(|   |)}>#"Local L:" << _partition[i]->_simpl_Ls[0] << endl;

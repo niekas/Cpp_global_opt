@@ -930,6 +930,7 @@ void Simplex::update_estimates(vector<Simplex*> simpls, vector<Function*> funcs,
         };
     };
     funcs[0]->_expected_improvement = funcs[0]->_f_min - min_min_lb;
+    funcs[0]->_expected_improvement_simpl = s;
 
 
     // Note: gali būti, kad slope apibrėžimas pas mane netinkamas atmetant

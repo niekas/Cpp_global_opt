@@ -470,6 +470,7 @@ public:
         _points = new PointTree(); // new Points();
         _stopping_criteria = "x_dist";
         _expected_improvement = numeric_limits<double>::max();
+        _expected_improvement_simpl = 0;
     };
     string _name;
     string _stopping_criteria;
@@ -484,6 +485,7 @@ public:
     static bool _global_mem_allocated;
 
     double _expected_improvement;
+    Simplex* _expected_improvement_simpl;
 
     int _calls;
     double _f_min;  // Best known function value
