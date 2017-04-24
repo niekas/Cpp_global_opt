@@ -4,9 +4,21 @@ import sys
 from numpy import array as a, matrix as m, arange, sqrt, isnan, pi, cos, sin, mean
 from itertools import permutations
 from mpl_toolkits.mplot3d import axes3d
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import matplotlib
+import random
+from matplotlib import pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import LightSource
+# matplotlib.rcParams.update({'font.size': 22})
+plt.rc('xtick', labelsize=18)
+plt.rc('ytick', labelsize=18)
+plt.rc('axes', labelsize=24)
 
 
-def show_partition(filename='partition.txt'):
+def show_partition(filename='log/partition.txt'):
     from matplotlib import pyplot as plt
     draw_from_iteration = 1
     iteration = 0
@@ -64,7 +76,7 @@ def show_partition(filename='partition.txt'):
             if simplex:
                 add_to.append(simplex)
 
-    title = title + 'Dalinimui pasirinkta simpleksu: ' + (str(len(selected)) + " is " + (str(len(simplexes))))
+    # title = title + 'Dalinimui pasirinkta simpleksu: ' + (str(len(selected)) + " is " + (str(len(simplexes))))
     show_potential(simplexes, selected, wanted, title=title)
 
 
@@ -77,16 +89,48 @@ def l2norm(a1, a2):
 
 def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     from matplotlib import pyplot as plt
-    ## Draw two plots
-    fig = plt.figure(figsize=(14,6))
-    # if len(simplexes[0]) > 4:
-    #     ax1 = fig.add_subplot(121, projection='3d')
-    # else:
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
-    print('got title: ', title)
-    fig.suptitle(title)
-    plt.title(title)
+    import numpy as np
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
+    import random
+    from matplotlib import pyplot as plt
+    from matplotlib import cm
+    from matplotlib.colors import LightSource
+
+
+    separate_images = True
+
+    if separate_images:
+        fig1 = plt.figure(figsize=(10,10))
+        ax1 = fig1.add_subplot(111)
+        fig2 = plt.figure(figsize=(10,10))
+        ax2 = fig2.add_subplot(111)
+        fig3 = plt.figure(figsize=(10,10))
+        ax3 = fig3.add_subplot(111)
+        fig4 = plt.figure(figsize=(10,10))
+        ax4 = fig4.add_subplot(111)
+    else:
+        fig = plt.figure(figsize=(14,6))
+        ax3 = fig.add_subplot(221)
+        ax1 = fig.add_subplot(222)
+        ax2 = fig.add_subplot(223)
+        # ax4 = fig.add_subplot(224, projection='3d')
+        ax4 = fig.add_subplot(224)
+
+    ax1.set_xlim([-0.01, 1.+ 0.01])
+    ax1.set_ylim([-0.01, 1.+ 0.01])
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(False)
+    ax1.spines['left'].set_visible(False)
+
+    ax4.set_xlim([-0.01, 1.+ 0.01])
+    ax4.set_ylim([-0.01, 1.+ 0.01])
+
+
+    # print('got title: ', title)
+    # fig.suptitle(title)
+    # plt.title(title)
 
     # ax2 = fig.add_subplot(111)
 
@@ -96,21 +140,24 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     # fig.suptitle(title)
     # ax2 = fig.add_subplot(111)
 
-
-    for simplex in simplexes:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'bo')
-    for simplex in selected:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'ro')
-
-
     ## Convex-hull
     for i in range(len(selected[:-1])):
         ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
-                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-', linewidth=2)
+
+    for simplex in simplexes:
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'bo', markersize=6)
+    # f = open('tmp.output', 'w')
+    for simplex in selected:
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'ro', markersize=10, markeredgewidth=1)
+    #     f.write('G1: %f, G2: %f, vertices: %s' % (simplex[-1]['value'], simplex[-1]['size'], str(simplex[:-1])+'\n'))
+    # f.close()
+
+
 
     ## Wanted simplices
-    for simplex in wanted:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'yo')
+    # for simplex in wanted:
+    #     ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'yo')
 
     ## Stairs rule
     # for i in range(len(selected[:-1])):
@@ -119,28 +166,32 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     #     ax2.plot([selected[i][-1]['size'], mid_size, mid_size, selected[i+1][-1]['size']],
     #             [selected[i][-1]['value'], selected[i][-1]['value'], selected[i+1][-1]['value'], selected[i+1][-1]['value']], 'r-')
 
-    ax2.set_ylabel(u'Mažiausios funkcijos reikšm$\.{e}$s simplekse $\k{i}$vertis')
-    ax2.set_xlabel('Simplekso diametras')
+    ax2.set_ylabel('G1')
+    ax2.set_xlabel('G2')
     ax1.set_ylabel('X2')
     ax1.set_xlabel('X1')
+    ax4.set_ylabel('X2')
+    ax4.set_xlabel('X1')
+    ax3.set_ylabel('X2')
+    ax3.set_xlabel('X1')
 
     for simplex in simplexes:
         s = simplex[:-1]
         for j in range(len(s)):
             if len(s) == 3:
-                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], 'b-')
+                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], 'b-', linewidth=2)
             else:
                 # should use permutations here
-                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], [s[j-1][2], s[j][2]], 'b-')
+                ax1.plot([s[j-1][0], s[j][0]], [s[j-1][1], s[j][1]], [s[j-1][2], s[j][2]], 'b-', linewidth=2)
 
     for simplex in selected:
         s = sort_vertexes_longest_edge_first(simplex)[:-1]
         for i, j in permutations(range(len(s)), 2):
             if len(s) == 3:
-                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], 'r-', linewidth=2)
+                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], 'r-', linewidth=4)
             else:
                 # should use permutations here
-                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], [s[i][2], s[j][2]], 'r-', linewidth=2)
+                ax1.plot([s[i][0], s[j][0]], [s[i][1], s[j][1]], [s[i][2], s[j][2]], 'r-', linewidth=4)
 
         edge_lengths = []   # [(vertex_index, vertex_index, edge_length),]
         for i, j in permutations(range(len(s)), 2):
@@ -150,8 +201,8 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
 
         if len(s) == 3:
             division_point = [(s[le_i][0]+s[le_j][0])/2., (s[le_i][1]+s[le_j][1])/2.]
-            ax1.plot([division_point[0]], [division_point[1]], 'ro')
-            ax1.plot([division_point[0], s[2][0]], [division_point[1], s[2][1]], 'r--')
+            ax1.plot([division_point[0], s[2][0]], [division_point[1], s[2][1]], 'r--', linewidth=4)
+            ax1.plot([division_point[0]], [division_point[1]], 'wo', markersize=10, markeredgewidth=2)
         else:
             division_point = [(s[le_i][0] + s[le_j][0])/2., (s[le_i][1] + s[le_j][1])/2., (s[le_i][2] + s[le_j][2])/2.]
             ax1.plot([division_point[0]], [division_point[1]], [division_point[2]], 'ro')
@@ -163,17 +214,111 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     for simplex in simplexes:
         for j in range(len(s)):
             if len(s) == 3:
-                ax1.plot([simplex[j][0]], [simplex[j][1]], 'bo')
+                ax1.plot([simplex[j][0]], [simplex[j][1]], 'bo', markersize=7)
             else:
-                ax1.plot([simplex[j][0]], [simplex[j][1]], [simplex[j][2]], 'bo')
+                ax1.plot([simplex[j][0]], [simplex[j][1]], [simplex[j][2]], 'bo', markersize=7)
 
     # ax2.axis([min([simplexes]) -0.05, 1.05, -0.05, 1.05])
     # max_size = max([s[-1]['size'] for s in simplexes])
     # ax2.set_xlim([-0.05, max_size + 0.05])
     # ax1.axis([-0.05, 1.05, -0.05, 1.05])
+
+
+    f = open('log/surface.txt')
+
+    zs = []
+    x = []
+    y = []
+    points = []
+    for line in f:
+        parts = line.split()
+        parts = [float(p.strip().strip(':').strip(',')) for p in parts]
+        points.append(parts)
+        x.append(parts[0])
+        y.append(parts[1])
+        zs.append(parts[2])
+    zs = np.array(zs)
+    x = np.array(x)
+    y = np.array(y)
+
+    X = np.reshape(x, (-1, int(np.sqrt(x.shape[0]))))
+    Y = np.reshape(y, (-1, int(np.sqrt(y.shape[0]))))
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    Z = zs.reshape(X.shape)
+
+    ls = LightSource(270, 45)
+    rgb = ls.shade(Z, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
+    # ax4.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=rgb, linewidth=0, antialiased=False, shade=False)
+
+    points = []
+    def draw_points_from_partition():
+        pf = open('log/final_partition.txt')
+        for line in pf:
+            if 'art' not in line and 'ele' not in line:
+                verts = line.split(';')
+                for vert in verts:
+                    point = []
+                    for part in vert.split():
+                        if ',' not in part:
+                            if '(' in part:
+                                part = part.strip('()')
+                            point.append(float(part))
+                    points.append(point)
+        for point in points:
+            if len(point) == 3:
+                # ax4.plot([point[0]], [point[1]], [point[2]], 'or', markersize=2)
+                ax4.plot([point[0]], [point[1]], 'or', markersize=6)
+
+    draw_points_from_partition()
+
+
+
+    # Contour plot
+    import matplotlib
+    import numpy as np
+    import matplotlib.cm as cm
+    import matplotlib.mlab as mlab
+    import matplotlib.pyplot as plt
+
+    matplotlib.rcParams['xtick.direction'] = 'out'
+    matplotlib.rcParams['ytick.direction'] = 'out'
+
+    delta = 0.025
+    # contour_levels = [-1, -0.5, -0.2, 0.0, 0.2,
+    #         0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2., 2.5, 3., 3.5, 4.]
+
+    # contour_levels = np.arange(-1,4.1,0.3)
+    contour_levels = [-1, -0.5,  0.0,  0.2,  0.5,  0.8,  1.1,  1.4,  1.7,  2. , 2.3,  2.6,  2.9,  3.2,  3.5,  3.8]
+    #  -1.00000000e+00 , 
+    #   -2.22044605e-16,   2.00000000e-01,   4.00000000e-01,
+    #    6.00000000e-01,   8.00000000e-01,   1.00000000e+00,   1.20000000e+00,
+    #    1.40000000e+00,   1.60000000e+00,   1.80000000e+00,   2.00000000e+00,
+    #    2.20000000e+00,   2.40000000e+00,   2.60000000e+00,   2.80000000e+00,
+    #    3.00000000e+00,   3.20000000e+00,   3.40000000e+00,   3.60000000e+00,
+    #    3.80000000e+00,   4.00000000e+00]
+
+    CS = ax3.contour(X, Y, Z, levels=contour_levels, linewidths=2)
+    # CS = plt.contour(X, Y, Z)
+    # ax3.xlabel('X1')
+    # ax3.ylabel('X2')
+    ax3.clabel(CS, inline=1, fontsize=10)
+    ax3.plot([0.54198], [0.951363], '*r', markersize=12)
+
+
+    # ax3.plot([0.1], [0.9], 'ro')
+
     if show:
+        # fig1.savefig('fig1.eps', format='eps', dpi=1200)
+        # fig2.savefig('fig2.eps', format='eps', dpi=1200)
+        # fig3.savefig('fig3.eps', format='eps', dpi=1200)
+        # fig4.savefig('fig4.eps', format='eps', dpi=1200)
+        fig1.savefig('fig1.eps', format='eps', dpi=600)
+        fig2.savefig('fig2.eps', format='eps', dpi=600)
+        fig3.savefig('fig3.eps', format='eps', dpi=600)
+        fig4.savefig('fig4.eps', format='eps', dpi=600)
         plt.show()
-    # return ax1, ax2
 
 
 def sort_vertexes_longest_edge_first(simplex):
