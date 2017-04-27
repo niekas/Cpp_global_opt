@@ -18,9 +18,10 @@ class Asimpl {
     Asimpl(const Asimpl& other) {};
     Asimpl& operator=(const Asimpl& other) {};
 public:
-    Asimpl(int max_calls=15000, double max_duration=3600) {
+    Asimpl(int max_calls=15000, double max_duration=3600, double alpha=0.4) {
         _iteration = 0;
         Simplex::glob_L = numeric_limits<double>::max();    // Reset glob_L value
+        Simplex::alpha = alpha;    // Reset glob_L value
         ofstream log_file; 
         log_file.open("log/partition.txt");
         log_file.close();

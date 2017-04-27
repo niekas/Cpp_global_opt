@@ -98,6 +98,7 @@ int main(int argc, char* argv[]) {  // Minimizes 100 functions from one GKLS cla
         {"max_duration", optional_argument, 0, 'd'},
         {"max_calls", optional_argument, 0, 'i'},
         {"glob_L", optional_argument, 0, 'g'},
+        {"alpha", optional_argument, 0, 'a'},
     };
     int cls;
     int fid;
@@ -108,11 +109,12 @@ int main(int argc, char* argv[]) {  // Minimizes 100 functions from one GKLS cla
     int max_calls = 40000;
     int max_duration = 2*3600;
     double glob_L = numeric_limits<double>::max();
+    double alpha = numeric_limits<double>::max();
 
     int opt_id;
     int iarg = 0;
     while(iarg != -1) {
-        iarg = getopt_long(argc, argv, "cnsftbdig", longopts, &opt_id);
+        iarg = getopt_long(argc, argv, "acnsftbdig", longopts, &opt_id);
         switch (iarg) {
             case 'c':
                 cls = strtoul(optarg, 0, 0);
@@ -140,6 +142,9 @@ int main(int argc, char* argv[]) {  // Minimizes 100 functions from one GKLS cla
                 break;
             case 'g':
                 glob_L = strtod(optarg, '\0');
+                break;
+            case 'a':
+                alpha = strtod(optarg, '\0');
                 break;
         };
     };
@@ -198,7 +203,15 @@ int main(int argc, char* argv[]) {  // Minimizes 100 functions from one GKLS cla
 
     // Minimize the function using Asimpl algorithm (it has alpha parameter set to 0.4)
 
-    Asimpl* alg = new Asimpl(max_calls, max_duration);
+    Asimpl* alg;
+    if (alpha != numeric_limits<double>::max()) {
+        alg = new Asimpl(max_calls, max_duration, alpha);
+    } else {
+        alg = new Asimpl(max_calls, max_duration);
+    };
+
+
+
     alg->minimize(func_uc);
     cout << "cls: " << cls << " fid: " << fid << " calls: " << points.size()
                << " --calls=" << points.size()

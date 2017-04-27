@@ -6,7 +6,7 @@ compile:
 
 run: compile
 	clear
-	./asimpl.out --func_cls=1 --func_id=1 --stop_crit=x_dist
+	./asimpl.out --func_cls=1 --func_id=1 --stop_crit=x_dist --alpha=0.4
 	
 test:
 	g++ test.cpp -o test.out

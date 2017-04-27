@@ -30,8 +30,6 @@ class Simplex {
     Simplex& operator=(const Simplex& other){}
 public:
     Simplex() { 
-        _alpha = 0.4;
-
         _D = 0;
         _le_v1 = 0;
         _le_v2 = 0;
@@ -50,9 +48,9 @@ public:
     double _diameter;   // Longest edge length
 
     double _min_L;      // Minimum L for this simplex
-    double _alpha;      // Coeficient of search globality
     double _min_lb;     // Minimum of the lower bound over simplex found using vertex with the lowest value
 
+    static double alpha;              // Coeficient of search globality
     static double glob_L;             // Globally known biggest min L
     static bool glob_L_was_updated;
 
@@ -135,10 +133,10 @@ public:
 
         // Initialize or update global L if needed
         if (Simplex::glob_L == numeric_limits<double>::max()) {
-            Simplex::glob_L = _alpha * _min_L;
+            Simplex::glob_L = Simplex::alpha * _min_L;
         } else {
-            if (Simplex::glob_L < _alpha * _min_L) {
-                Simplex::glob_L = _alpha * _min_L;
+            if (Simplex::glob_L < Simplex::alpha * _min_L) {
+                Simplex::glob_L = Simplex::alpha * _min_L;
                 Simplex::glob_L_was_updated = true;
             };
         };
@@ -208,6 +206,7 @@ public:
 };
 bool Simplex::glob_L_was_updated = false;
 double Simplex::glob_L = numeric_limits<double>::max();
+double Simplex::alpha = numeric_limits<double>::max();
 
 
 void Simplex::update_min_lb_values(vector<Simplex*> simpls, Function* func) {
