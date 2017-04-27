@@ -3,6 +3,7 @@
 #define SIMPLEX_H 
 #include <fstream>
 #include <sstream>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -16,6 +17,13 @@ double l2norm(Point* p1, Point* p2) {
     return sqrt(squared_sum);
 };
 
+
+typedef unsigned long long timestamp_t;
+static timestamp_t get_timestamp() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return now.tv_usec + (timestamp_t) now.tv_sec * 1000000;
+};
 
 class Simplex {
     Simplex(const Simplex& other){}

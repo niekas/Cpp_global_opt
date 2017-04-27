@@ -18,17 +18,25 @@ class Asimpl {
     Asimpl(const Asimpl& other) {};
     Asimpl& operator=(const Asimpl& other) {};
 public:
-    Asimpl() {
+    Asimpl(int max_calls=15000, double max_duration=3600) {
         _iteration = 0;
         Simplex::glob_L = numeric_limits<double>::max();    // Reset glob_L value
         ofstream log_file; 
         log_file.open("log/partition.txt");
         log_file.close();
+
+        _max_calls = max_calls;
+        _max_duration = max_duration;
+        _duration = 0;
     };
 
     vector<Simplex*> _partition;
     Function* _func;
     int _iteration;
+    string _status;
+    double _duration;   // Duration in seconds
+    double _max_duration;   // Maximum allowed duration of minimization in seconds
+    int _max_calls;
 
     vector<Simplex*> partition_unit_cube_into_simplices_combinatoricly(int n) {
         // Partitions n-unit-cube into simplices using combinatoric vertex triangulation algorithm
@@ -280,6 +288,7 @@ public:
     };
 
     void minimize(Function* func){
+        timestamp_t start = get_timestamp();
         _func = func;
         _partition = partition_unit_cube_into_simplices_combinatoricly(_func->_D);
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
@@ -294,15 +303,15 @@ public:
                 simplices_to_divide = select_simplices_to_divide();
             };
 
-            if (_func->_evaluations >= 100) {
-                cout <<"Iter" << _iteration << ", evals"<< _func->_evaluations << endl;
-                // vector<Simplex*> simplices_to_divide;
-                Simplex::log_partition(_partition, simplices_to_divide, _func);
-                // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-                FILE* testp = popen("python log/img.py", "r");
-                pclose(testp);
-                exit(0);
-            };
+            // if (_func->_evaluations >= 100) {
+            //     cout <<"Iter" << _iteration << ", evals"<< _func->_evaluations << endl;
+            //     // vector<Simplex*> simplices_to_divide;
+            //     Simplex::log_partition(_partition, simplices_to_divide, _func);
+            //     // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+            //     FILE* testp = popen("python log/img.py", "r");
+            //     pclose(testp);
+            //     exit(0);
+            // };
 
             // Divide seletected simplices
             vector<Simplex*> new_simplices = divide_simplices(simplices_to_divide);
@@ -322,6 +331,15 @@ public:
             sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
             Simplex::update_min_lb_values(_partition, _func);
             _iteration += 1;
+
+            timestamp_t end = get_timestamp();
+            _duration = (end - start) / 1000000.0L;
+        };
+
+        if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
+            _status = "D"; 
+        } else {
+            _status = "S";
         };
 
     };
