@@ -2,11 +2,11 @@ do: run
 
 compile:
 	@echo "==================================================================================="
-	g++ gkls.c rnd_gen.c main.cpp -o asimpl.out
+	g++ gkls.c rnd_gen.c main.cpp -o libre.out
 
 run: compile
 	clear
-	./asimpl.out --func_cls=1 --func_id=1 --stop_crit=x_dist --alpha=0.4
+	./libre.out --func_name=ep1 --alpha=0.1
 	
 test:
 	g++ test.cpp -o test.out
@@ -25,9 +25,9 @@ num:
 	ls results/Disimpl-v/ | wc -l
 
 mem_check:  compile
-	valgrind --tool=memcheck --leak-check=full --track-origins=yes -v ./asimpl.out --func_cls=1 --func_id=1
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes -v ./libre.out --func_cls=1 --func_id=1
 
 profiler:  compile
-	valgrind --tool=callgrind ./asimpl.out --func_cls=1 --func_id=1
+	valgrind --tool=callgrind ./libre.out --func_cls=1 --func_id=1
 	# git clone https://github.com/jrfonseca/gprof2dot bin/gprof2dot
 	./bin/gprof2dot/gprof2dot.py -f callgrind callgrind.out.* | dot -Tsvg -o profile.svg

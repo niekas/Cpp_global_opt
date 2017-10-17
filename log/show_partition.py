@@ -55,12 +55,13 @@ def show_partition(filename='partition.txt'):
                 add_to = wanted
             for part in parts:
                 if ',' not in part:
-                    simplex.append([float(e) for e in part.split() if not ('(') in e])
-                    if '(' in part:
-                        simplex[-1].append({'obj': (float(part.split()[-1].strip().strip('()')),)})
+                    point_coords, obj_vals = part.split('(')
+                    simplex.append([float(e) for e in point_coords.split()])
+                    simplex[-1].append({'obj': [float(e) for e in obj_vals.strip(')').split()]})
+
                 if '(' in part and ',' in part:
-                    size, value = part.strip().strip('()').split(',')
-                    simplex.append({'size': float(size), 'value': float(value)})
+                    size, tolerance = part.strip().strip('()').split(',')
+                    simplex.append({'size': float(size), 'tolerance': float(tolerance)})
             if simplex:
                 add_to.append(simplex)
 
@@ -98,19 +99,19 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
 
 
     for simplex in simplexes:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'bo')
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['tolerance']], 'bo')
     for simplex in selected:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'ro')
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['tolerance']], 'ro')
 
 
     ## Convex-hull
     for i in range(len(selected[:-1])):
         ax2.plot([selected[i][-1]['size'], selected[i+1][-1]['size']],
-                 [selected[i][-1]['value'], selected[i+1][-1]['value']], 'r-')
+                 [selected[i][-1]['tolerance'], selected[i+1][-1]['tolerance']], 'r-')
 
     ## Wanted simplices
     for simplex in wanted:
-        ax2.plot([simplex[-1]['size']], [simplex[-1]['value']], 'yo')
+        ax2.plot([simplex[-1]['size']], [simplex[-1]['tolerance']], 'yo')
 
     ## Stairs rule
     # for i in range(len(selected[:-1])):
@@ -170,7 +171,7 @@ def show_potential(simplexes, selected=[], wanted=[], show=True, title=''):
     # ax2.axis([min([simplexes]) -0.05, 1.05, -0.05, 1.05])
     # max_size = max([s[-1]['size'] for s in simplexes])
     # ax2.set_xlim([-0.05, max_size + 0.05])
-    # ax1.axis([-0.05, 1.05, -0.05, 1.05])
+    ax1.axis([-0.05, 1.05, -0.05, 1.05])
     if show:
         plt.show()
     # return ax1, ax2

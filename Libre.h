@@ -1,7 +1,7 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
-#ifndef ASIMPL_H
-#define ASIMPL_H 
-#include <math.h> 
+#ifndef LIBRE_H
+#define LIBRE_H
+#include <math.h>
 #include "utils.h"
 #include <ctime>
 #include <iostream>
@@ -14,16 +14,18 @@
 using namespace std;
 
 
-class Asimpl {
-    Asimpl(const Asimpl& other) {};
-    Asimpl& operator=(const Asimpl& other) {};
+class Libre {
+    Libre(const Libre& other) {};
+    Libre& operator=(const Libre& other) {};
 public:
-    Asimpl(int max_calls=15000, double max_duration=3600, double alpha=0.4) {
+    Libre(int max_calls, double max_duration, double alpha) {
         _iteration = 0;
-        Simplex::glob_L = numeric_limits<double>::max();    // Reset glob_L value
-        Simplex::alpha = alpha;    // Reset glob_L value
-        ofstream log_file; 
+        Simplex::alpha = alpha;
+
+        ofstream log_file;
         log_file.open("log/partition.txt");
+        log_file.close();
+        log_file.open("log/front.txt");
         log_file.close();
 
         _max_calls = max_calls;
@@ -32,7 +34,7 @@ public:
     };
 
     vector<Simplex*> _partition;
-    Function* _func;
+    FunctionUC* _func;
     int _iteration;
     string _status;
     double _duration;   // Duration in seconds
@@ -52,7 +54,11 @@ public:
             teta[i] = i;
         };
 
+        int test_i = 0;
+
         do {
+            test_i += 1;
+
             int triangle[n+1][n];
 
             for (int k = 0; k < n; k++) {
@@ -64,13 +70,13 @@ public:
                     triangle[vertex + 1][j] = triangle[vertex][j];
                 };
                 triangle[vertex + 1][teta[vertex]] = 1;
-            }
+            };
 
             Simplex* simpl = new Simplex();
-            for (int i=0; i < n + 1; i++){
+            for (int i=0; i < n + 1; i++) {
                 Point* tmp_point = new Point(triangle[i], n);
-                
-                Point* point = _func->get(tmp_point); 
+
+                Point* point = _func->get_point_with_values(tmp_point);
                 if (tmp_point != point) {
                     delete tmp_point;
                 };
@@ -102,9 +108,9 @@ public:
             c = nextv(nextv(v, m), m);
 
             double* matrix[3];
-            double line1[3] = {simplices[a]->_diameter, simplices[a]->_min_lb, 1.};
-            double line2[3] = {simplices[b]->_diameter, simplices[b]->_min_lb, 1.};
-            double line3[3] = {simplices[c]->_diameter, simplices[c]->_min_lb, 1.};
+            double line1[3] = {simplices[a]->_diameter, simplices[a]->_tolerance, 1.};
+            double line2[3] = {simplices[b]->_diameter, simplices[b]->_tolerance, 1.};
+            double line3[3] = {simplices[c]->_diameter, simplices[c]->_tolerance, 1.};
             matrix[0] = line1;
             matrix[1] = line2;
             matrix[2] = line3;
@@ -142,23 +148,23 @@ public:
     };
 
     vector<Simplex*> select_simplices_to_divide() {
+        // Note: tolerance value in simplices is negative, to be able to use standard convex-hull method
         vector<Simplex*> selected_simplices;
 
-        // Sort simplices by their diameter
+        // Sort simplices ascending by their diameter
         vector<Simplex*> sorted_partition = _partition;
         sort(sorted_partition.begin(), sorted_partition.end(), Simplex::ascending_diameter);
-        double f_min = _func->_f_min;
 
-        // Find simplices with best lb_min values and unique diameters
-        Simplex* min_lb_min_simplex = sorted_partition[0];  // Initial value
+        // Find simplices with best tolerance values and unique diameters
+        Simplex* max_tolerance_simplex = sorted_partition[0];  // Initial value
         vector<double> diameters;
         vector<Simplex*> best_for_size;
 
         bool unique_diameter;
         bool found_with_same_size;
         for (int i=0; i < sorted_partition.size(); i++) {
-            if (sorted_partition[i]->_min_lb < min_lb_min_simplex->_min_lb) {
-                min_lb_min_simplex = sorted_partition[i];
+            if (sorted_partition[i]->_tolerance < max_tolerance_simplex->_tolerance) {
+                max_tolerance_simplex = sorted_partition[i];
             };
             // Saves unique diameters
             unique_diameter = true;
@@ -176,7 +182,7 @@ public:
             for (int j=0; j < best_for_size.size(); j++) {
                 if (best_for_size[j]->_diameter == sorted_partition[i]->_diameter){
                     found_with_same_size = true;
-                    if (best_for_size[j]->_min_lb > sorted_partition[i]->_min_lb) {
+                    if (best_for_size[j]->_tolerance > sorted_partition[i]->_tolerance) {
                         best_for_size.erase(best_for_size.begin()+j);
                         best_for_size.push_back(sorted_partition[i]);
                     };
@@ -189,22 +195,22 @@ public:
 
         // Find strict pareto optimal solutions using convex-hull strategy
         vector<Simplex*> selected;
-        if (min_lb_min_simplex == best_for_size[best_for_size.size()-1]) {
-            selected.push_back(min_lb_min_simplex);
+        if (max_tolerance_simplex == best_for_size[best_for_size.size()-1]) {
+            selected.push_back(max_tolerance_simplex);
         } else {
-            if ((best_for_size.size() > 2) && (min_lb_min_simplex != best_for_size[best_for_size.size()-1])) {
+            if ((best_for_size.size() > 2) && (max_tolerance_simplex != best_for_size[best_for_size.size()-1])) {
                 vector<Simplex*> simplices_below_line;
-                double a1 = min_lb_min_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
-                double b1 = min_lb_min_simplex->_min_lb;
+                double a1 = max_tolerance_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
+                double b1 = max_tolerance_simplex->_tolerance;
                 double a2 = best_for_size[best_for_size.size()-1]->_diameter;
-                double b2 = best_for_size[best_for_size.size()-1]->_min_lb;
+                double b2 = best_for_size[best_for_size.size()-1]->_tolerance;
 
                 double slope = (b2 - b1)/(a2 - a1);
                 double bias = b1 - slope * a1;
 
                 for (int i=0; i < best_for_size.size(); i++) {
                     if (best_for_size[i]->_diameter >= a1) {  // Dont take into consideration smallel diameter simplices
-                        if (best_for_size[i]->_min_lb < slope*best_for_size[i]->_diameter + bias +1e-12) {
+                        if (best_for_size[i]->_tolerance < slope*best_for_size[i]->_diameter + bias +1e-12) {
                             simplices_below_line.push_back(best_for_size[i]);
                         };
                     };
@@ -222,11 +228,11 @@ public:
         // Remove simplices which were not selected and should not be divided
         selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
 
-        // Select all simplices which have best min_lb for its size 
+        // Select all simplices which have best min_lb for its size
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
-                    (sorted_partition[i]->_min_lb == selected[j]->_min_lb)) {
+                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&
+                    (sorted_partition[i]->_tolerance == selected[j]->_tolerance)) {
                     selected_simplices.push_back(sorted_partition[i]);
                 };
             };
@@ -244,7 +250,7 @@ public:
             c[i] = (simplex->_le_v1->_X[i] + simplex->_le_v2->_X[i]) / 2.;
         };
         Point* tmp_point = new Point(c, n);
-        Point* middle_point = _func->get(tmp_point); 
+        Point* middle_point = _func->get_point_with_values(tmp_point);
         if (tmp_point != middle_point) {
             delete tmp_point;
         };
@@ -253,7 +259,7 @@ public:
         Simplex* left_simplex = new Simplex();
         Simplex* right_simplex = new Simplex();
 
-        for (int i=0; i < simplex->size(); i++){
+        for (int i=0; i < simplex->size(); i++) {
             if (simplex->_verts[i] != simplex->_le_v1){
                 right_simplex->add_vertex(simplex->_verts[i]);
             } else {
@@ -288,14 +294,33 @@ public:
         return new_simplices;
     };
 
-    void minimize(Function* func){
+    void show_partition(vector<Simplex*> selected) {
+        Simplex::log_partition(_partition, selected, _func);
+        FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
+        //// FILE* testp = popen("python log/img.py", "r");
+        pclose(testp);
+    };
+
+    void minimize(FunctionUC* func){
+        Simplex::reset_glob_Ls(func->_C);
+
         timestamp_t start = get_timestamp();
         _func = func;
         _partition = partition_unit_cube_into_simplices_combinatoricly(_func->_D);
-        sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
-        Simplex::update_min_lb_values(_partition, _func);
 
-        while (!_func->is_accurate_enough()) {
+        sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
+        Simplex::update_tolerance_values(_partition, _func);
+
+        while (_func->_evaluations < 480) {   // (!_func->is_accurate_enough()) {
+                                              // Should be accurate enough:
+                                              // can be defined based on tolerance.
+                                              // need to define methodology for experiments comparing genetic algorithms.
+
+            /////////////////////////////////////////////
+            ////    Different stopping conditions    ////
+            /////////////////////////////////////////////
+
+
             // Select simplices to divide
             vector<Simplex*> simplices_to_divide;
             if (_iteration == 0) {
@@ -303,16 +328,6 @@ public:
             } else {
                 simplices_to_divide = select_simplices_to_divide();
             };
-
-            // if (_func->_evaluations >= 100) {
-            //     cout <<"Iter" << _iteration << ", evals"<< _func->_evaluations << endl;
-            //     // vector<Simplex*> simplices_to_divide;
-            //     Simplex::log_partition(_partition, simplices_to_divide, _func);
-            //     // FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-            //     FILE* testp = popen("python log/img.py", "r");
-            //     pclose(testp);
-            //     exit(0);
-            // };
 
             // Divide seletected simplices
             vector<Simplex*> new_simplices = divide_simplices(simplices_to_divide);
@@ -330,22 +345,23 @@ public:
             };
 
             sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
-            Simplex::update_min_lb_values(_partition, _func);
+            Simplex::update_tolerance_values(_partition, _func);
             _iteration += 1;
 
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
         };
 
+        // Metrics should be added and tested (compare results with Fortran implementation).
+
         if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
-            _status = "D"; 
+            _status = "D";
         } else {
             _status = "S";
         };
-
     };
 
-    virtual ~Asimpl(){
+    virtual ~Libre(){
         for (int i=0; i < _partition.size(); i++) {
             delete _partition[i];
         };

@@ -1,11 +1,15 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
 #ifndef FUNCTIONS_H
-#define FUNCTIONS_H 
+#define FUNCTIONS_H
 #include <vector>
 #include <iostream>
 #include <algorithm>
 #include <limits>
 #include <cassert>
+#include <math.h>
+#include <string.h>
+#include <fstream>
+// #include "utils.h"
 
 using namespace std;
 
@@ -36,21 +40,28 @@ public:
     };
 
     int _D;          // Dimension of variable space
-    double* _X;      // Coordinates in normalised [0,1]^n space  
-    double _value;   // Objective function value
+    int _C;
+    double* _X;      // Coordinates in normalised [0,1]^n space
+    vector<double> _values;   // Objective function value
     vector<Simplex*> _simplices;  // Simplices, which have this point as vertex
-         
-    void add_value(double value) {
-        _value = value;
+
+    void add_values(vector<double> values) {
+        for (int i=0; i < values.size(); i++) {
+            _values.push_back(values[i]);
+        };
+        _C = values.size();
     };
 
     void print(){
-        // cout.precision(17);
+        cout.precision(17);
         cout << "       ";
         for (int i=0; i < size(); i++){
             cout << _X[i] << "  \t";
         };
-        cout << "-> " << _value << "  ";
+        cout << "-> ";
+        for (int i=0; i < _values.size(); i++) {
+             cout << _values[i] << "  ";
+        };
         // cout << endl;
     };
 
@@ -59,7 +70,15 @@ public:
     };
 
     static bool ascending_value(Point* p1, Point* p2) {
-        return p1->_value < p2->_value;
+        // Ascending by first value, if equal then by second and so on
+        for (int c=0; c < p1->_values.size(); c++) {
+            if (p1->_values[c] < p2->_values[c]) {
+                return p1->_values[c] < p2->_values[c];
+            };
+            if (p1->_values[c] > p2->_values[c]) {
+                return p1->_values[c] < p2->_values[c];
+            };
+        };
     };
 
     virtual ~Point(){
@@ -69,13 +88,13 @@ public:
 
 
 // Binary balancing tree (or simply linked list) for storing points
-// It returns cached point if a point with the same coordinates is added 
+// It returns cached point if a point with the same coordinates is added
 class PointTree;
 
 class PointTreeNode {
     PointTreeNode(const PointTreeNode& other){}
     PointTreeNode& operator=(const PointTreeNode& other){}
-public:                
+public:
     PointTreeNode(double value=numeric_limits<double>::max()){
         _height = 1;
         _value = value;
@@ -120,7 +139,7 @@ public:
     void update_height(PointTreeNode* node) {
         int lh = 0;
         int rh = 0;
-        if (node->_left != 0) { lh = node->_left->_height; }; 
+        if (node->_left != 0) { lh = node->_left->_height; };
         if (node->_right != 0) { rh = node->_right->_height; };
         if (lh > rh) {
             node->_height = lh + 1;
@@ -135,7 +154,7 @@ public:
 
     void left_right_rebalance(PointTreeNode* node) {
         PointTreeNode* diatteched_node;
-        // node left right  <-  node left right left 
+        // node left right  <-  node left right left
         diatteched_node = node->_left->_right;
         node->_left->_right = node->_left->_right->_left;
         if (node->_left->_right != 0) { node->_left->_right->_parent = node->_left; };
@@ -154,7 +173,7 @@ public:
         PointTreeNode* diatteched;
         diatteched = node->_left;
         node->_left = node->_left->_right;
-        if (node->_left != 0) { node->_left->_parent = node; };  
+        if (node->_left != 0) { node->_left->_parent = node; };
         diatteched->_parent = node->_parent;
         if (node->_parent != 0) {
             if (node->_parent->_left == node) {
@@ -173,7 +192,7 @@ public:
     };
     void right_left_rebalance(PointTreeNode* node) {
         PointTreeNode* diatteched_node;
-        // node left right  <-  node left right left 
+        // node left right  <-  node left right left
         diatteched_node = node->_right->_left;
         node->_right->_left = node->_right->_left->_right;
         if (node->_right->_left != 0) { node->_right->_left->_parent = node->_right; };
@@ -193,7 +212,7 @@ public:
         diatteched = node->_right;
         node->_right = node->_right->_left;
         if (node->_right != 0) { node->_right->_parent = node; };
-        diatteched->_parent = node->_parent;                       
+        diatteched->_parent = node->_parent;
         if (node->_parent != 0) {
             if (node->_parent->_left == node) {
                 node->_parent->_left = diatteched;
@@ -266,7 +285,7 @@ public:
             node->_subtree = new PointTree(_dim + 1);
         };
         Point* found_point = node->_subtree->add(point);  // Get or insert point to the subtree
-        if (found_point != 0) {  // We got point so return it 
+        if (found_point != 0) {  // We got point so return it
             return found_point;
         } else {
             return 0;  // We inserted point
@@ -329,110 +348,297 @@ PointTreeNode::~PointTreeNode() {
 };
 
 
-class Function {        // Abstract function class
+//////////////////////////////////////////////
+//// Multi-objective function definitions ////
+//////////////////////////////////////////////
+
+class Function {  // Abstract class to store information specific to a function (optimization problem)
     Function(const Function& other){};
     Function& operator=(const Function& other){};
 public:
-    Function(){
-        _f_min = numeric_limits<int>::max();
+    Function() {};
+
+    string _name;          // Function name
+    int _D;                // Number of dimensions in variable space
+    int _C;                // Number of objectives
+    vector<double> _lb;    // Lower bound values
+    vector<double> _ub;    // Upper bound values
+    vector<double> _nadir; // Nadir point
+
+    virtual vector<double> get_values(vector<double> X) = 0;
+    virtual ~Function(){};
+};
+
+
+class FunctionUC {      // Abstract multi-objective function defined over a unite-cube
+    FunctionUC(const FunctionUC& other){};
+    FunctionUC& operator=(const FunctionUC& other){};
+public:
+    FunctionUC(Function* func){
+        _func = func;    // Unable to use:  get_values_not_uc = func->get_values;
+        _lb = func->_lb;
+        _ub = func->_ub;
+        _nadir = func->_nadir;
+        _D = func->_D;
+        _C = func->_C;
         _points = new PointTree();
         _evaluations = 0;
     };
 
+    string _name;
+    int _D;                 // Number of dimensions in variable space
+    int _C;                 // Number of objectives
+    vector<double> _nadir;
+    vector<double> _lb;
+    vector<double> _ub;
+    PointTree* _points;     // Binary balancing tree to store points where objective function was evaluated
+    vector<Point*> _pareto_front;
+    bool _pareto_front_was_updated;
     int _evaluations;
-    int _D;                     // Dimension
-    double _f_min;              // Best known function value
-    PointTree* _points;         // Binary balancing tree to store points where objective function was evaluated
-    vector<Point*> _new_points; // Points for which stopping condition was not checked yet
+    Function* _func;
 
-    void add_value(Point* p) {
-        double val = value(p);
+    //// Evaluation methods
+    vector<double> transform_from_uc(double* X_uc) {
+        vector<double> X;
+        for (int i=0; i < _D; i++){
+            X.push_back(X_uc[i] * (_ub[i] - _lb[i]) + _lb[i]);
+        };
+        return X;
+    };
+
+    vector<double> get_values(Point* p_uc) {  // Returns values for point in UC
+        return _func->get_values(transform_from_uc(p_uc->_X));
+    };
+
+
+    void add_values(Point* p_uc) {  // Adds obj values to point in UC
+        vector<double> values = get_values(p_uc);
         _evaluations += 1;
-        p->add_value(val);
-        if (_f_min > val) {
-            _f_min = val;
+        p_uc->add_values(values);
+        if (update_pareto_front(p_uc) == true){
+            _pareto_front_was_updated = true;
         };
     };
 
-    Point* get(double *c, int D){  
-        // Returns a point with objective function value (the point may be from cache)
-        Point* p = new Point(c, D);
+    Point* get_point_with_values(double *c_uc, int D) {
+        Point* p = new Point(c_uc, D);
         Point* cached_point = _points->add(p);
         if (cached_point) {   // Value at this point is already known
             delete p;
             return cached_point;
         } else {              // Value at this point is unknown, evaluate it
-            add_value(p);
-            _new_points.push_back(p);
+            add_values(p);
             return p;
         };
     };
 
-    Point* get(Point* p) {   
-        // Returns a point with objective function value (the point may be from cache)
+    Point* get_point_with_values(Point* p) {
         Point* cached_point = _points->add(p);
         if (cached_point) {   // Value at this point is already known
             return cached_point;
         } else {              // Value at this point is unknown, evaluate it
-            add_value(p);
-            _new_points.push_back(p);
+            add_values(p);
             return p;
         };
     };
 
-    virtual bool is_accurate_enough() = 0;
+    //// Pareto front methods
+    int domination(Point* q, Point* p) {
+        // 0 - q domiates p
+        // 1 - none of them dominates
+        // 2 - p dominates q
+        int q_better = 0;
+        int p_better = 0;
+        for (int i=0; i < q->_values.size(); i++) {
+            if (q->_values[i] < p->_values[i]) { q_better++; };
+            if (q->_values[i] > p->_values[i]) { p_better++; };
+        };
+        if (q_better == q->_values.size()) { return 0; }
+        if (p_better == q->_values.size()) { return 2; }
+        return 1;
+    };
 
-    virtual double value(Point* point) = 0;
+    bool update_pareto_front(Point* p) { // Returns if point was added to pareto front
+        // if any(q > p for q in S):
+        //     return
+        // for q in [q for q in S if p > q]:
+        //     S.remove(q)
+        //     S.add(p)
 
-    virtual ~Function(){
+        vector<int> dominated;
+        int relation;
+        for (int i=0; i < _pareto_front.size(); i++) {
+            relation = domination(_pareto_front[i], p);  // domination returns 0 > , 1 = , 2 <
+            if (relation == 0) { return false; };
+            if (relation == 2) { dominated.push_back(i); };
+        };
+        for (int i = dominated.size() - 1; i >= 0; i--) {
+            _pareto_front.erase(_pareto_front.begin() + dominated[i], _pareto_front.begin() + dominated[i] +1);
+        };
+        _pareto_front.push_back(p);
+        return true;
+    };
+
+    void show_pareto_front() {
+        log_pareto_front();
+        FILE* testp = popen("python log/show_pareto_front.py log/front.txt", "r");
+        pclose(testp);
+    };
+
+    //// Pareto front metrics
+    double values_l2norm(Point* p1, Point* p2) {
+        double squared_sum = 0;
+        for (int i=0; i < p1->_C; i++){
+            squared_sum += pow(p1->_values[i] - p2->_values[i], 2);
+        };
+        return sqrt(squared_sum);
+    };
+
+    double uniformity() {
+        vector<double> min_dists;
+        double dist;
+        for (int i=0; i < _pareto_front.size(); i++) {
+            double min_dist = numeric_limits<double>::max();
+            for (int j=0; j < _pareto_front.size(); j++) {
+                if (i != j) {
+                    dist = values_l2norm(_pareto_front[i], _pareto_front[j]);
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                    };
+                };
+            };
+            min_dists.push_back(min_dist);
+        };
+
+        double avg_dist = 0;
+        for (int i=0; i < min_dists.size(); i++) {
+            avg_dist += min_dists[i];
+        };
+        avg_dist = avg_dist / min_dists.size();
+
+        double uniformity = 0;
+        for (int i=0; i < min_dists.size(); i++) {
+           uniformity += pow(min_dists[i] - avg_dist, 2);
+        };
+
+        uniformity = sqrt(uniformity);
+        return uniformity;
+    };
+
+    double hyper_volume() {
+        sort(_pareto_front.begin(), _pareto_front.end(), Point::ascending_value);
+        log_pareto_front();
+
+        char buffer[50];
+        FILE* fp = popen("python log/show_pareto_front.py log/front.txt -hv", "r");
+        fgets(buffer, 10, fp);
+        pclose(fp);
+        return atof(buffer);
+    };
+
+    //// Visualization methods
+    void log_pareto_front() {
+        ofstream log_file;
+        log_file.open("log/front.txt");
+        log_file.close();
+        log_file.open("log/front.txt", ios::app);
+        log_file.precision(17);
+
+        for (int i=0; i < _pareto_front.size(); i++) {
+            for (int k=0; k < _pareto_front[i]->_D; k++) {
+                log_file << _pareto_front[i]->_X[k] << " ";
+            };
+            log_file << "(";
+            for (int c=0; c < _pareto_front[i]->_C; c++) {
+                log_file << _pareto_front[i]->_values[c];
+                if (c != _pareto_front[i]->_C -1) {
+                    log_file << " ";
+                };
+            };
+            log_file << ")" << endl;
+        };
+
+        log_file << "nadir: ";
+        for (int c=0; c < _nadir.size(); c++) {
+            log_file << _nadir[c] << " ";
+        };
+        log_file.close();
+    };
+
+    virtual ~FunctionUC(){
         delete _points;
     };
 };
 
 
-class FuncUC: public Function {      // Function which is define over a unit-cube
-    FuncUC(const FuncUC& other){};
-    FuncUC& operator=(const FuncUC& other){};
+class EP1: public Function {             // Nonuniform Covering Method as Applied to Multicriteria Optimization Problems with Guaranteed Accuracy
+    EP1(const EP1& other){};             // Yu. G. Evtushenko and M. A. Posypkin, first example
+    EP1& operator=(const EP1& other){};  // Front with a break
 public:
-    FuncUC(int D, double (*get_value_uc)(vector<double>), bool (*should_stop_uc)(vector<double>)){
-        _D = D;
-        get_value = get_value_uc;
-        should_stop = should_stop_uc;
+    EP1() {
+        _name = "EP1";
+        _D = 2;
+        _C = 2;
+        _nadir.push_back(2.); _nadir.push_back(3.);
+        _lb.push_back(0.); _lb.push_back(0.);
+        _ub.push_back(2.); _ub.push_back(2.);
     };
 
-    double (*get_value) (vector<double>);   // Objective function evaluation method provided as an argument
-    bool (*should_stop) (vector<double>);   // Stopping criterion method provided as an argument
+    double value1(vector<double> X) {
+        return X[0];
+    };
 
-    double value(Point* point) {
-        // Converts a point object to a vector and evaluates objective value at it
-        vector<double> point_vector;
-        for (int i=0; i < point->_D; i++) {
-            point_vector.push_back(point->_X[i]);
+    double value2(vector<double> X) {
+        double p1 = fabs(X[0] - 1);
+        double p2 = 1.5 - X[0];
+        if (p1 < p2) {
+            return p1 + X[1] + 1;
         };
-        return get_value(point_vector);
+        return p2 + X[1] + 1;
     };
 
-    bool is_accurate_enough() {
-        // Checks stopping criterion for all new points
-        int nr_of_new_points = _new_points.size();
-        for (int j=0; j < nr_of_new_points; j++) {
-            // Pop one of the new points
-            Point* p = _new_points.back();      
-            _new_points.pop_back();
-
-            // Convert that point object to a vector
-            vector<double> point_vector;        
-            for (int i=0; i < p->_D; i++) {
-                point_vector.push_back(p->_X[i]);
-            };
-
-            // Check stopping condition
-            if (should_stop(point_vector) == true) {  
-                return true;
-            };
-        };
-        return false;
+    vector<double> get_values(vector<double> X) {
+        vector<double> values;
+        values.push_back(value1(X));
+        values.push_back(value2(X));
+        return values;
     };
+};
+
+
+class EP2: public Function {           // Nonuniform Covering Method as Applied to Multicriteria Optimization Problems with Guaranteed Accuracy
+    EP2(const EP2& other){};             // Yu. G. Evtushenko and M. A. Posypkin, second example
+    EP2& operator=(const EP2& other){};
+public:
+    EP2() {
+        _name = "EP2";
+        _D = 2;
+        _C = 2;
+        _nadir.push_back(1.); _nadir.push_back(1.);
+        _lb.push_back(0.); _lb.push_back(0.);
+        _ub.push_back(1.); _ub.push_back(1.);
+    };
+
+    double value1(vector<double> X) {
+        return (X[0] - 1) * X[1] * X[1] + 1;
+    };
+
+    double value2(vector<double> X) {
+        return X[1];
+    };
+
+    vector<double> get_values(vector<double> X) {
+        vector<double> values;
+        values.push_back(value1(X));
+        values.push_back(value2(X));
+        return values;
+    };
+};
+
+
+Function* get_function(char* func_name) {
+    if (!strcmp(func_name, "ep1")) { return new EP1(); };
+    if (!strcmp(func_name, "ep2")) { return new EP2(); };
 };
 
 #endif
