@@ -309,9 +309,9 @@ public:
     };
 
     virtual ~Simplex(){
-        for (int i=0; i < _verts.size(); i++) {
-            _verts[i]->_simplices.erase(remove(_verts[i]->_simplices.begin(), _verts[i]->_simplices.end(), this), _verts[i]->_simplices.end());
-        };
+        // for (int i=0; i < _verts.size(); i++) {
+        //     _verts[i]->_simplices.erase(remove(_verts[i]->_simplices.begin(), _verts[i]->_simplices.end(), this), _verts[i]->_simplices.end());
+        // };
         _verts.clear();
     };
 };

@@ -6,7 +6,7 @@ compile:
 
 run: compile
 	clear
-	./libre.out --func_name=ep1 --alpha=0.1
+	./libre.out --func_name=zdt1 --alpha=0.1
 	
 test:
 	g++ test.cpp -o test.out

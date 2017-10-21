@@ -9,6 +9,8 @@
 #include <math.h>
 #include <string.h>
 #include <fstream>
+#include <sstream>
+
 // #include "utils.h"
 
 using namespace std;
@@ -356,7 +358,7 @@ class Function {  // Abstract class to store information specific to a function 
     Function(const Function& other){};
     Function& operator=(const Function& other){};
 public:
-    Function() {};
+    Function(int D) {};
 
     string _name;          // Function name
     int _D;                // Number of dimensions in variable space
@@ -575,7 +577,7 @@ class EP1: public Function {             // Nonuniform Covering Method as Applie
     EP1(const EP1& other){};             // Yu. G. Evtushenko and M. A. Posypkin, first example
     EP1& operator=(const EP1& other){};  // Front with a break
 public:
-    EP1() {
+    EP1(int D) {
         _name = "EP1";
         _D = 2;
         _C = 2;
@@ -610,7 +612,7 @@ class EP2: public Function {           // Nonuniform Covering Method as Applied 
     EP2(const EP2& other){};             // Yu. G. Evtushenko and M. A. Posypkin, second example
     EP2& operator=(const EP2& other){};
 public:
-    EP2() {
+    EP2(int D) {
         _name = "EP2";
         _D = 2;
         _C = 2;
@@ -636,9 +638,289 @@ public:
 };
 
 
-Function* get_function(char* func_name) {
-    if (!strcmp(func_name, "ep1")) { return new EP1(); };
-    if (!strcmp(func_name, "ep2")) { return new EP2(); };
+class GeneticFunction: public Function {
+    GeneticFunction(const GeneticFunction& other){};
+    GeneticFunction& operator=(const GeneticFunction& other){};
+public:
+    GeneticFunction(int D) {};
+    vector<double> get_values(vector<double> X) {
+        stringstream outs;
+        outs << "python3 problems/genetic.py";
+        outs << " " << _name;
+        for (int i=0; i < X.size(); i++) {
+            outs << " " << X[i];
+        };
+        FILE* p = popen(outs.str().c_str(), "r");
+        char input[1500];
+        if (p != NULL) {
+            while(fgets(input, sizeof(input), p) != NULL) {};
+        };
+        string ins = string(input);
+        stringstream ss(ins);
+
+        double num;
+        vector<double> values;
+        while (!ss.eof()) {
+            ss >> num;
+            values.push_back(num);
+        };
+        return values;
+    };
+};
+
+
+class ZDT1: public GeneticFunction {
+    ZDT1(const ZDT1& other){};
+    ZDT1& operator=(const ZDT1& other){};
+public:
+    ZDT1(int D) {
+        _name = "zdt1";
+        _C = 2;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(11.);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class ZDT2: public GeneticFunction {
+    ZDT2(const ZDT2& other){};
+    ZDT2& operator=(const ZDT2& other){};
+public:
+    ZDT2(int D) {
+        _name = "zdt2";
+        _C = 2;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(11.);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class ZDT3: public GeneticFunction {
+    ZDT3(const ZDT3& other){};
+    ZDT3& operator=(const ZDT3& other){};
+public:
+    ZDT3(int D) {
+        _name = "zdt3";
+        _C = 2;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(11.);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class ZDT4: public GeneticFunction {
+    ZDT4(const ZDT4& other){};
+    ZDT4& operator=(const ZDT4& other){};
+public:
+    ZDT4(int D) {
+        _name = "zdt4";
+        _C = 2;
+        _D = 6;   if (D > 0) { _D = D };  // 10
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(11.);
+        };
+        _lb.push_back(0.);
+        _ub.push_back(1.);
+        for (int i=0; i < _D -1; i++) {
+            _lb.push_back(-5.);
+            _ub.push_back(5.);
+        };
+    };
+};
+
+class ZDT6: public GeneticFunction {
+    ZDT6(const ZDT6& other){};
+    ZDT6& operator=(const ZDT6& other){};
+public:
+    ZDT6(int D) {
+        _name = "zdt6";
+        _C = 2;
+        _D = 6;   if (D > 0) { _D = D };  // 10
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(11.);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+
+class DTLZ1: public GeneticFunction {
+    DTLZ1(const DTLZ1& other){};
+    DTLZ1& operator=(const DTLZ1& other){};
+public:
+    DTLZ1(int D) {
+        _name = "dtlz1";
+        _C = 3;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+                                       // Reference points taken from:
+        for (int c=0; c < _C; c++) {   // Theory of the Hypervolume Indicator: Optimal μ-Distributions and the Choice of the Reference Point
+            _nadir.push_back(1.);      // https://hal.inria.fr/inria-00430540/document
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class DTLZ2: public GeneticFunction {
+    DTLZ2(const DTLZ2& other){};
+    DTLZ2& operator=(const DTLZ2& other){};
+public:
+    DTLZ2(int D) {
+        _name = "dtlz2";
+        _C = 3;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(1.5);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class DTLZ3: public GeneticFunction {
+    DTLZ3(const DTLZ3& other){};
+    DTLZ3& operator=(const DTLZ3& other){};
+public:
+    DTLZ3(int D) {
+        _name = "dtlz3";
+        _C = 3;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(1.5);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+
+    };
+};
+
+class DTLZ4: public GeneticFunction {
+    DTLZ4(const DTLZ4& other){};
+    DTLZ4& operator=(const DTLZ4& other){};
+public:
+    DTLZ4(int D) {
+        _name = "dtlz4";
+        _C = 3;
+        _D = 6;   if (D > 0) { _D = D };  // 30
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(1.5);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class DTLZ5: public GeneticFunction {
+    DTLZ5(const DTLZ5& other){};
+    DTLZ5& operator=(const DTLZ5& other){};
+public:
+    DTLZ5(int D) {
+        _name = "dtlz5";
+        _C = 3;
+        _D = 6;    if (D > 0) { _D = D }; // 30
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(1.5);   // Note: here 1.5 value is guessed
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class DTLZ6: public GeneticFunction {
+    DTLZ6(const DTLZ6& other){};
+    DTLZ6& operator=(const DTLZ6& other){};
+public:
+    DTLZ6(int D) {
+        _name = "dtlz6";
+        _C = 3;
+        _D = 6;  if (D > 0) { _D = D };
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(1.5);   // Note: here 1.5 value is guessed
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+class DTLZ7: public GeneticFunction {
+    DTLZ7(const DTLZ7& other){};
+    DTLZ7& operator=(const DTLZ7& other){};
+public:
+    DTLZ7(int D) {
+        _name = "dtlz7";
+        _C = 3;
+        _D = 6;   if (D > 0) { _D = D };
+        for (int c=0; c < _C; c++) {
+            _nadir.push_back(15.);
+        };
+        for (int i=0; i < _D; i++) {
+            _lb.push_back(0.);
+            _ub.push_back(1.);
+
+        };
+    };
+};
+
+
+Function* get_function(char* func_name, int D=-1) {
+    if (!strcmp(func_name, "ep1")) { return new EP1(D); };
+    if (!strcmp(func_name, "ep2")) { return new EP2(D); };
+
+    if (!strcmp(func_name, "zdt1")) { return new ZDT1(D); };
+    if (!strcmp(func_name, "zdt2")) { return new ZDT2(D); };
+    if (!strcmp(func_name, "zdt3")) { return new ZDT3(D); };
+    if (!strcmp(func_name, "zdt4")) { return new ZDT4(D); };
+    if (!strcmp(func_name, "zdt6")) { return new ZDT6(D); };
+
+    if (!strcmp(func_name, "dtlz1")) { return new DTLZ1(D); };
+    if (!strcmp(func_name, "dtlz2")) { return new DTLZ2(D); };
+    if (!strcmp(func_name, "dtlz3")) { return new DTLZ3(D); };
+    if (!strcmp(func_name, "dtlz4")) { return new DTLZ4(D); };
+    if (!strcmp(func_name, "dtlz5")) { return new DTLZ5(D); };
+    if (!strcmp(func_name, "dtlz6")) { return new DTLZ6(D); };
+    if (!strcmp(func_name, "dtlz7")) { return new DTLZ7(D); };
 };
 
 #endif

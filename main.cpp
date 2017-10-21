@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     Libre* alg = new Libre(max_calls, max_duration, alpha);
     alg->minimize(func_uc);
 
-    cout << "Number of function evaluations: " << func_uc->_evaluations << endl
+    cout << "Trials for " << func_uc->_name << ": " << func_uc->_evaluations << endl
          << "   Points in Pareto front: " << func_uc->_pareto_front.size() << endl
          << "   Hyper-volume: " << func_uc->hyper_volume() << endl
          << "   Uniformity: " << func_uc->uniformity()
@@ -79,35 +79,26 @@ int main(int argc, char* argv[]) {
 
     func_uc->show_pareto_front();
 
-    // cout << "func name: " << func_name << " calls: " << func->_evaluations
-    //            << " --calls=" << func->_evaluations
-    //            // << " --subregions=" << alg->_partition.size()
-    //            // << " --duration=" << alg->_duration
-    //            << " --status=" << alg->_status
-    //            // << " --f_min=" << func_uc->_f_min
-    //            // << " --global_L=" << Simplex::glob_L
-    //            << " --min_diam=" << alg->_partition[0]->_diameter
-    //            << " --max_diam=" << alg->_partition[alg->_partition.size() - 1]->_diameter << endl;
-    //
-    // // Save results
-    // if (callback != '\0') {
-    //     string cmd;
-    //     stringstream cmd_ss;
-    //     cmd_ss.precision(10);
-    //     cmd_ss << callback
-    //            // << " --calls=" << points.size()
-    //            // << " --subregions=" << alg->_partition.size()
-    //            // << " --duration=" << alg->_duration
-    //            // << " --task_id=" << task_id
-    //            // << " --status=" << alg->_status
-    //            // << " --f_min=" << func_uc->_f_min
-    //            // << " --global_L=" << Simplex::glob_L
-    //            // << " --min_diam=" << alg->_partition[0]->_diameter
-    //            // << " --max_diam=" << alg->_partition[alg->_partition.size() - 1]->_diameter
-    //            << " -exe=" << argv[0] << endl;
-    //     cmd = cmd_ss.str();
-    //     popen(cmd.c_str(), "r");
-    // };
+    //// Save results
+    if (callback != '\0') {
+        string cmd;
+        stringstream cmd_ss;
+        cmd_ss.precision(10);
+        cmd_ss << callback
+               << " --calls=" << func_uc->_evaluations
+               << " --points_in_pareto_front=" << func_uc->_pareto_front.size()
+               << " --hyper_volume=" << func_uc->hyper_volume()
+               << " --uniformity=" << func_uc->uniformity()
+               << " --subregions=" << alg->_partition.size()
+               << " --duration=" << alg->_duration
+               << " --task_id=" << task_id
+               << " --status=" << alg->_status
+               << " --min_diam=" << alg->_partition[0]->_diameter
+               << " --max_diam=" << alg->_partition[alg->_partition.size() - 1]->_diameter
+               << " -exe=" << argv[0] << endl;
+        cmd = cmd_ss.str();
+        popen(cmd.c_str(), "r");
+    };
 
     delete func_uc;  // Clear allocated memory
     delete func;
