@@ -647,7 +647,7 @@ public:
     GeneticFunction(int D) {};
     vector<double> get_values(vector<double> X) {
         stringstream outs;
-        outs << "python3 problems/genetic.py";
+        outs << "python problems/genetic.py";
         outs << " " << _name;
         for (int i=0; i < X.size(); i++) {
             outs << " " << X[i];
