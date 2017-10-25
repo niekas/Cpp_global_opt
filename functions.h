@@ -358,6 +358,7 @@ class Function {  // Abstract class to store information specific to a function 
     Function(const Function& other){};
     Function& operator=(const Function& other){};
 public:
+    Function() {};
     Function(int D) {};
 
     string _name;          // Function name
@@ -533,7 +534,7 @@ public:
 
         char buffer[50];
         FILE* fp = popen("python log/show_pareto_front.py log/front.txt -hv", "r");
-        fgets(buffer, 10, fp);
+        fgets(buffer, 50, fp);
         pclose(fp);
         return atof(buffer);
     };
@@ -642,6 +643,7 @@ class GeneticFunction: public Function {
     GeneticFunction(const GeneticFunction& other){};
     GeneticFunction& operator=(const GeneticFunction& other){};
 public:
+    GeneticFunction() {};
     GeneticFunction(int D) {};
     vector<double> get_values(vector<double> X) {
         stringstream outs;
@@ -676,7 +678,7 @@ public:
     ZDT1(int D) {
         _name = "zdt1";
         _C = 2;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
         for (int c=0; c < _C; c++) {
             _nadir.push_back(11.);
         };
@@ -695,7 +697,7 @@ public:
     ZDT2(int D) {
         _name = "zdt2";
         _C = 2;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
         for (int c=0; c < _C; c++) {
             _nadir.push_back(11.);
         };
@@ -714,7 +716,7 @@ public:
     ZDT3(int D) {
         _name = "zdt3";
         _C = 2;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
         for (int c=0; c < _C; c++) {
             _nadir.push_back(11.);
         };
@@ -733,7 +735,7 @@ public:
     ZDT4(int D) {
         _name = "zdt4";
         _C = 2;
-        _D = 6;   if (D > 0) { _D = D };  // 10
+        _D = 6;   if (D > 0) { _D = D; };  // 10
         for (int c=0; c < _C; c++) {
             _nadir.push_back(11.);
         };
@@ -753,7 +755,7 @@ public:
     ZDT6(int D) {
         _name = "zdt6";
         _C = 2;
-        _D = 6;   if (D > 0) { _D = D };  // 10
+        _D = 6;   if (D > 0) { _D = D; };  // 10
         for (int c=0; c < _C; c++) {
             _nadir.push_back(11.);
         };
@@ -773,7 +775,7 @@ public:
     DTLZ1(int D) {
         _name = "dtlz1";
         _C = 3;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
                                        // Reference points taken from:
         for (int c=0; c < _C; c++) {   // Theory of the Hypervolume Indicator: Optimal μ-Distributions and the Choice of the Reference Point
             _nadir.push_back(1.);      // https://hal.inria.fr/inria-00430540/document
@@ -793,7 +795,7 @@ public:
     DTLZ2(int D) {
         _name = "dtlz2";
         _C = 3;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
 
         for (int c=0; c < _C; c++) {
             _nadir.push_back(1.5);
@@ -813,7 +815,7 @@ public:
     DTLZ3(int D) {
         _name = "dtlz3";
         _C = 3;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
 
         for (int c=0; c < _C; c++) {
             _nadir.push_back(1.5);
@@ -834,7 +836,7 @@ public:
     DTLZ4(int D) {
         _name = "dtlz4";
         _C = 3;
-        _D = 6;   if (D > 0) { _D = D };  // 30
+        _D = 6;   if (D > 0) { _D = D; };  // 30
         for (int c=0; c < _C; c++) {
             _nadir.push_back(1.5);
         };
@@ -853,7 +855,7 @@ public:
     DTLZ5(int D) {
         _name = "dtlz5";
         _C = 3;
-        _D = 6;    if (D > 0) { _D = D }; // 30
+        _D = 6;    if (D > 0) { _D = D; }; // 30
         for (int c=0; c < _C; c++) {
             _nadir.push_back(1.5);   // Note: here 1.5 value is guessed
         };
@@ -872,7 +874,7 @@ public:
     DTLZ6(int D) {
         _name = "dtlz6";
         _C = 3;
-        _D = 6;  if (D > 0) { _D = D };
+        _D = 6;  if (D > 0) { _D = D; };
         for (int c=0; c < _C; c++) {
             _nadir.push_back(1.5);   // Note: here 1.5 value is guessed
         };
@@ -891,7 +893,7 @@ public:
     DTLZ7(int D) {
         _name = "dtlz7";
         _C = 3;
-        _D = 6;   if (D > 0) { _D = D };
+        _D = 6;   if (D > 0) { _D = D; };
         for (int c=0; c < _C; c++) {
             _nadir.push_back(15.);
         };
