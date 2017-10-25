@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
          << "   Uniformity: " << func_uc->uniformity()
          << endl;
 
-    func_uc->show_pareto_front();
+    // func_uc->show_pareto_front();
 
     //// Save results
     if (callback != '\0') {
