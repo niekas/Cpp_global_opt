@@ -5,7 +5,7 @@ from itertools import permutations
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import pyplot as plt
 
-from deap.tools._hypervolume import hv
+from _hypervolume import hv
 
 
 def show_pareto_front(filename='front.txt'):
