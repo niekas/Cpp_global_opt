@@ -2,13 +2,14 @@
 import sys
 from numpy import array as a, matrix as m, arange, sqrt, isnan, pi, cos, sin, mean
 from itertools import permutations
-from mpl_toolkits.mplot3d import axes3d
-from matplotlib import pyplot as plt
 
 from _hypervolume import hv
 
 
 def show_pareto_front(filename='front.txt'):
+    from matplotlib import pyplot as plt
+    # from mpl_toolkits.mplot3d import axes3d
+
     f = open(filename)
     pareto_front = []
     nadir = None
