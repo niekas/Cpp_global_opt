@@ -2,7 +2,7 @@ do: run
 
 compile:
 	@echo "==================================================================================="
-	g++ gkls.c rnd_gen.c main.cpp -o libre.out -I/usr/include/python2.7 -lpython2.7
+	g++ gkls.c rnd_gen.c main.cpp -o libre.out -I/usr/include/python2.6 -lpython2.6
 
 run: compile
 	clear

@@ -11,7 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
-#include "python2.7/Python.h"
+#include "python2.6/Python.h"
 
 // #include "utils.h"
 
