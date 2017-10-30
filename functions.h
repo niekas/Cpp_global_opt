@@ -10,6 +10,8 @@
 #include <string.h>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
+#include "python2.7/Python.h"
 
 // #include "utils.h"
 
@@ -64,7 +66,7 @@ public:
         for (int i=0; i < _values.size(); i++) {
              cout << _values[i] << "  ";
         };
-        // cout << endl;
+        cout << endl;
     };
 
     int size(){
@@ -384,8 +386,17 @@ public:
         _nadir = func->_nadir;
         _D = func->_D;
         _C = func->_C;
+        _name = func->_name;
         _points = new PointTree();
         _evaluations = 0;
+
+        Py_Initialize();
+        PyRun_SimpleString("import sys; sys.path.append('.')");
+        _show_pareto_front_string = PyString_FromString((char*)"log.show_pareto_front");
+        _show_pareto_front = PyImport_Import(_show_pareto_front_string);
+        _get_hv = PyObject_GetAttrString(_show_pareto_front, (char*)"get_hv");
+        _hv_args = PyTuple_Pack(1,PyString_FromString((char*)"log/front.txt"));
+
     };
 
     string _name;
@@ -399,6 +410,11 @@ public:
     bool _pareto_front_was_updated;
     int _evaluations;
     Function* _func;
+
+    PyObject* _show_pareto_front_string;
+    PyObject* _show_pareto_front;
+    PyObject* _get_hv;
+    PyObject* _hv_args;
 
     //// Evaluation methods
     vector<double> transform_from_uc(double* X_uc) {
@@ -528,15 +544,22 @@ public:
         return uniformity;
     };
 
+    double log_hyper_volume() {
+        double hv = hyper_volume();
+        ofstream log_file;
+        log_file.open("log/hyper_volume.txt", ios::app);
+        log_file.precision(17);
+        log_file << _evaluations << " " << hv <<  endl;
+        log_file.close();
+        return hv;
+    };
+
     double hyper_volume() {
         sort(_pareto_front.begin(), _pareto_front.end(), Point::ascending_value);
         log_pareto_front();
 
-        char buffer[50];
-        FILE* fp = popen("python log/show_pareto_front.py log/front.txt -hv", "r");
-        fgets(buffer, 50, fp);
-        pclose(fp);
-        return atof(buffer);
+        PyObject* hv = PyObject_CallObject(_get_hv, _hv_args);
+        return PyFloat_AsDouble(hv);
     };
 
     //// Visualization methods
@@ -643,28 +666,40 @@ class GeneticFunction: public Function {
     GeneticFunction(const GeneticFunction& other){};
     GeneticFunction& operator=(const GeneticFunction& other){};
 public:
-    GeneticFunction() {};
+    GeneticFunction() {
+        Py_Initialize();
+        PyRun_SimpleString("import sys; sys.path.append('.')");
+        _problem_module_string = PyString_FromString((char*)"mo_problems");
+        _problem_module  = PyImport_Import(_problem_module_string);
+    };
     GeneticFunction(int D) {};
-    vector<double> get_values(vector<double> X) {
-        stringstream outs;
-        outs << "python problems/genetic.py";
-        outs << " " << _name;
-        for (int i=0; i < X.size(); i++) {
-            outs << " " << X[i];
-        };
-        FILE* p = popen(outs.str().c_str(), "r");
-        char input[1500];
-        if (p != NULL) {
-            while(fgets(input, sizeof(input), p) != NULL) {};
-        };
-        string ins = string(input);
-        stringstream ss(ins);
 
-        double num;
+    PyObject* _problem_module_string;
+    PyObject* _problem_module;
+    PyObject* _py_func;
+
+    void print_py(PyObject* obj) {
+        PyObject* objectsRepresentation = PyObject_Repr(obj);
+        const char* s = PyString_AsString(objectsRepresentation);
+        cout << "Py object: " << s << endl;
+    };
+
+    vector<double> get_values(vector<double> X) {
+        _py_func = PyObject_GetAttrString(_problem_module, (char*)_name.c_str());
+        PyObject* py_xs = PyTuple_New(X.size());
+        for (int i=0; i < X.size(); i++) {
+            PyTuple_SetItem(py_xs, i, PyFloat_FromDouble(X[i]));
+        };
+
+        PyObject* obj_args = PyTuple_Pack(1, py_xs);
+        PyObject* _obj_values = PyObject_CallObject(_py_func, obj_args);
+        PyObject* py_item;
+
         vector<double> values;
-        while (!ss.eof()) {
-            ss >> num;
-            values.push_back(num);
+        for (int i=0; i < PyTuple_Size(_obj_values); i++) {
+            py_item = PyTuple_GetItem(_obj_values, i);
+            double value = PyFloat_AsDouble(py_item);
+            values.push_back(value);
         };
         return values;
     };

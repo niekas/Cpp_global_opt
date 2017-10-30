@@ -88,6 +88,21 @@ def print_hv(filename='front.txt'):
     objs = [e[-1]['obj'] for e in pareto_front ]
     print(hv.hypervolume(a(objs), nadir))
 
+def get_hv(filename='front.txt'):
+    f = open(filename)
+    pareto_front = []
+    nadir = None
+    for line in f:
+        if 'nadir' not in line:
+            xs, objs = line.split('(')
+            pareto_front.append(xs.split() + [{'obj': [float(e.strip().strip(')')) for e in objs.split()]}])
+        else:
+            nadir = [float(e) for e in line.strip('nadir:').split()]
+
+    objs = [e[-1]['obj'] for e in pareto_front ]
+    return hv.hypervolume(a(objs), nadir)
+
+
 if __name__ == '__main__':
     if '-hv' in sys.argv:
         if sys.argv[1] != '-hv':

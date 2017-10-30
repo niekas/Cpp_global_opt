@@ -27,6 +27,8 @@ public:
         log_file.close();
         log_file.open("log/front.txt");
         log_file.close();
+        log_file.open("log/hyper_volume.txt");
+        log_file.close();
 
         _max_calls = max_calls;
         _max_duration = max_duration;
@@ -311,7 +313,7 @@ public:
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
         Simplex::update_tolerance_values(_partition, _func);
 
-        while (_func->_evaluations < 480) {   // (!_func->is_accurate_enough()) {
+        while (_func->_evaluations < 1200) {   // (!_func->is_accurate_enough()) {
                                               // Should be accurate enough:
                                               // can be defined based on tolerance.
                                               // need to define methodology for experiments comparing genetic algorithms.
@@ -319,7 +321,7 @@ public:
             /////////////////////////////////////////////
             ////    Different stopping conditions    ////
             /////////////////////////////////////////////
-
+            double hv = func->log_hyper_volume();
 
             // Select simplices to divide
             vector<Simplex*> simplices_to_divide;

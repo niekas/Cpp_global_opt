@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         alpha = 0.4;
     };
 
-    Function* func = get_function(func_name);
+    Function* func = get_function(func_name, 3);
     FunctionUC* func_uc = new FunctionUC(func);
 
     Libre* alg = new Libre(max_calls, max_duration, alpha);
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
          << "   Points in Pareto front: " << func_uc->_pareto_front.size() << endl
          << "   Hyper-volume: " << func_uc->hyper_volume() << endl
          << "   Uniformity: " << func_uc->uniformity()
+         << "   Duration: " << alg->_duration
          << endl;
 
     // func_uc->show_pareto_front();

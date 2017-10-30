@@ -2,7 +2,7 @@ do: run
 
 compile:
 	@echo "==================================================================================="
-	g++ gkls.c rnd_gen.c main.cpp -o libre.out
+	g++ gkls.c rnd_gen.c main.cpp -o libre.out -I/usr/include/python2.7 -lpython2.7
 
 run: compile
 	clear
@@ -25,9 +25,9 @@ num:
 	ls results/Disimpl-v/ | wc -l
 
 mem_check:  compile
-	valgrind --tool=memcheck --leak-check=full --track-origins=yes -v ./libre.out --func_cls=1 --func_id=1
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes -v ./libre.out --func_name=zdt1 --alpha=0.1
 
 profiler:  compile
-	valgrind --tool=callgrind ./libre.out --func_cls=1 --func_id=1
+	valgrind --tool=callgrind ./libre.out --func_name=zdt1 --alpha=0.1
 	# git clone https://github.com/jrfonseca/gprof2dot bin/gprof2dot
 	./bin/gprof2dot/gprof2dot.py -f callgrind callgrind.out.* | dot -Tsvg -o profile.svg

@@ -494,7 +494,7 @@ zdt6.nadir = [11., 11.]
 zdt6.bound_low = [0.] + [0.]*(zdt6.dimension-1)
 zdt6.bound_up = [1.] + [1.]*(zdt6.dimension-1)
 
-def dtlz1(individual, obj):
+def dtlz1(individual, obj=3):
     """DTLZ1 multiobjective function. It returns a tuple of *obj* values.
     The individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
@@ -527,7 +527,7 @@ dtlz1.bound_low = [0.] + [0.]*(dtlz1.dimension-1)
 dtlz1.bound_up = [1.] + [1.]*(dtlz1.dimension-1)
 
 
-def dtlz2(individual, obj):
+def dtlz2(individual, obj=3):
     """DTLZ2 multiobjective function. It returns a tuple of *obj* values.
     The individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
@@ -559,7 +559,7 @@ dtlz2.nadir = [1.5, 1.5, 1.5]
 dtlz2.bound_low = [0.] + [0.]*(dtlz2.dimension-1)
 dtlz2.bound_up = [1.] + [1.]*(dtlz2.dimension-1)
 
-def dtlz3(individual, obj):
+def dtlz3(individual, obj=3):
     """DTLZ3 multiobjective function. It returns a tuple of *obj* values.
     The individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
@@ -590,7 +590,7 @@ dtlz3.nadir = [1.5, 1.5, 1.5]
 dtlz3.bound_low = [0.] + [0.]*(dtlz3.dimension-1)
 dtlz3.bound_up = [1.] + [1.]*(dtlz3.dimension-1)
 
-def dtlz4(individual, obj, alpha):
+def dtlz4(individual, obj=3, alpha=100):    # alpha=10 is easier
     """DTLZ4 multiobjective function. It returns a tuple of *obj* values. The
     individual must have at least *obj* elements. The *alpha* parameter allows
     for a meta-variable mapping in :func:`dtlz2` :math:`x_i \\rightarrow
@@ -623,7 +623,7 @@ dtlz4.nadir = [1.5, 1.5, 1.5]
 dtlz4.bound_low = [0.] + [0.]*(dtlz4.dimension-1)
 dtlz4.bound_up = [1.] + [1.]*(dtlz4.dimension-1)
 
-def dtlz5(ind, n_objs):
+def dtlz5(ind, n_objs=3):
     """DTLZ5 multiobjective function. It returns a tuple of *obj* values. The
     individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
@@ -648,7 +648,7 @@ dtlz5.bound_low = [0.] + [0.]*(dtlz5.dimension-1)
 dtlz5.bound_up = [1.] + [1.]*(dtlz5.dimension-1)
 # Bi-objective case has only one point in Pareto-front
 
-def dtlz6(ind, n_objs):
+def dtlz6(ind, n_objs=3):
     """DTLZ6 multiobjective function. It returns a tuple of *obj* values. The
     individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
@@ -673,7 +673,7 @@ dtlz6.bound_low = [0.] + [0.]*(dtlz6.dimension-1)
 dtlz6.bound_up = [1.] + [1.]*(dtlz6.dimension-1)
 # Bi-objective case has only one point in Pareto-front
 
-def dtlz7(ind, n_objs):
+def dtlz7(ind, n_objs=3):
     """DTLZ7 multiobjective function. It returns a tuple of *obj* values. The
     individual must have at least *obj* elements.
     From: K. Deb, L. Thiele, M. Laumanns and E. Zitzler. Scalable Multi-Objective
