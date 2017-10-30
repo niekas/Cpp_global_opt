@@ -390,13 +390,27 @@ public:
         _points = new PointTree();
         _evaluations = 0;
 
+        // Clear log files
+        stringstream sd;
+        sd << _D;
+        _partition_log_filename = ("log/partition_" + _name + "_" + sd.str() + ".txt");
+        _front_log_filename = ("log/front_" + _name + "_" + sd.str() + ".txt");
+        _stats_log_filename = ("log/stats_" + _name + "_" + sd.str() + ".txt");
+        ofstream log_file;
+        log_file.open(_partition_log_filename.c_str());
+        log_file.close();
+        log_file.open(_front_log_filename.c_str());
+        log_file.close();
+        log_file.open(_stats_log_filename.c_str());
+        log_file.close();
+
+        // Open python functions
         Py_Initialize();
         PyRun_SimpleString("import sys; sys.path.append('.')");
         _show_pareto_front_string = PyString_FromString((char*)"log.show_pareto_front");
         _show_pareto_front = PyImport_Import(_show_pareto_front_string);
         _get_hv = PyObject_GetAttrString(_show_pareto_front, (char*)"get_hv");
-        _hv_args = PyTuple_Pack(1,PyString_FromString((char*)"log/front.txt"));
-
+        _hv_args = PyTuple_Pack(1,PyString_FromString((char*)_front_log_filename.c_str()));
     };
 
     string _name;
@@ -410,6 +424,10 @@ public:
     bool _pareto_front_was_updated;
     int _evaluations;
     Function* _func;
+
+    string _partition_log_filename;
+    string _front_log_filename;
+    string _stats_log_filename;
 
     PyObject* _show_pareto_front_string;
     PyObject* _show_pareto_front;
@@ -500,7 +518,7 @@ public:
 
     void show_pareto_front() {
         log_pareto_front();
-        FILE* testp = popen("python log/show_pareto_front.py log/front.txt", "r");
+        FILE* testp = popen(string("python log/show_pareto_front.py " + _front_log_filename).c_str(), "r");
         pclose(testp);
     };
 
@@ -548,7 +566,8 @@ public:
         double hv = hyper_volume();
         double uni = uniformity();
         ofstream log_file;
-        log_file.open("log/hyper_volume.txt", ios::app);
+
+        log_file.open(_stats_log_filename.c_str(), ios::app);
         log_file.precision(17);
         log_file << _evaluations << " " << hv << " " << uni << endl;
         log_file.close();
@@ -566,9 +585,9 @@ public:
     //// Visualization methods
     void log_pareto_front() {
         ofstream log_file;
-        log_file.open("log/front.txt");
+        log_file.open(_front_log_filename.c_str());
         log_file.close();
-        log_file.open("log/front.txt", ios::app);
+        log_file.open(_front_log_filename.c_str(), ios::app);
         log_file.precision(17);
 
         for (int i=0; i < _pareto_front.size(); i++) {

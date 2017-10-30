@@ -22,14 +22,6 @@ public:
         _iteration = 0;
         Simplex::alpha = alpha;
 
-        ofstream log_file;
-        log_file.open("log/partition.txt");
-        log_file.close();
-        log_file.open("log/front.txt");
-        log_file.close();
-        log_file.open("log/hyper_volume.txt");
-        log_file.close();
-
         _max_calls = max_calls;
         _max_duration = max_duration;
         _duration = 0;
@@ -298,8 +290,7 @@ public:
 
     void show_partition(vector<Simplex*> selected) {
         Simplex::log_partition(_partition, selected, _func);
-        FILE* testp = popen("python log/show_partition.py log/partition.txt", "r");
-        //// FILE* testp = popen("python log/img.py", "r");
+        FILE* testp = popen(string("python log/show_partition.py " + _func->_partition_log_filename).c_str(), "r");
         pclose(testp);
     };
 
@@ -321,7 +312,7 @@ public:
             /////////////////////////////////////////////
             ////    Different stopping conditions    ////
             /////////////////////////////////////////////
-            double hv = func->log_stats();
+            double hv = _func->log_stats();
 
             // Select simplices to divide
             vector<Simplex*> simplices_to_divide;
