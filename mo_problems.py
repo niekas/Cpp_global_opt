@@ -520,7 +520,7 @@ def dtlz1(individual, obj=3):
     g = 100 * (len(individual[obj-1:]) + sum((xi-0.5)**2 - cos(20*pi*(xi-0.5)) for xi in individual[obj-1:]))
     f = [0.5 * reduce(mul, individual[:obj-1], 1) * (1 + g)]
     f.extend(0.5 * reduce(mul, individual[:m], 1) * (1 - individual[m]) * (1 + g) for m in reversed(xrange(obj-1)))
-    return f
+    return tuple(f)
 dtlz1.dimension = 6  # 10
 dtlz1.nadir = [1., 1., 1.]    # PF: (sum fi) = 1, fi > 0
 dtlz1.bound_low = [0.] + [0.]*(dtlz1.dimension-1)
@@ -553,7 +553,7 @@ def dtlz2(individual, obj=3):
     f = [(1.0+g) *  reduce(mul, (cos(0.5*xi*pi) for xi in xc), 1.0)]
     f.extend((1.0+g) * reduce(mul, (cos(0.5*xi*pi) for xi in xc[:m]), 1) * sin(0.5*xc[m]*pi) for m in range(obj-2, -1, -1))
 
-    return f
+    return tuple(f)
 dtlz2.dimension = 6  # 10
 dtlz2.nadir = [1.5, 1.5, 1.5]
 dtlz2.bound_low = [0.] + [0.]*(dtlz2.dimension-1)
@@ -584,7 +584,7 @@ def dtlz3(individual, obj=3):
     g = 100 * (len(xm) + sum((xi-0.5)**2 - cos(20*pi*(xi-0.5)) for xi in xm))
     f = [(1.0+g) *  reduce(mul, (cos(0.5*xi*pi) for xi in xc), 1.0)]
     f.extend((1.0+g) * reduce(mul, (cos(0.5*xi*pi) for xi in xc[:m]), 1) * sin(0.5*xc[m]*pi) for m in range(obj-2, -1, -1))
-    return f
+    return tuple(f)
 dtlz3.dimension = 6  # 10
 dtlz3.nadir = [1.5, 1.5, 1.5]
 dtlz3.bound_low = [0.] + [0.]*(dtlz3.dimension-1)
@@ -617,7 +617,7 @@ def dtlz4(individual, obj=3, alpha=100):    # alpha=10 is easier
     g = sum((xi-0.5)**2 for xi in xm)
     f = [(1.0+g) *  reduce(mul, (cos(0.5*xi**alpha*pi) for xi in xc), 1.0)]
     f.extend((1.0+g) * reduce(mul, (cos(0.5*xi**alpha*pi) for xi in xc[:m]), 1) * sin(0.5*xc[m]**alpha*pi) for m in range(obj-2, -1, -1))
-    return f
+    return tuple(f)
 dtlz4.dimension = 6  # 10
 dtlz4.nadir = [1.5, 1.5, 1.5]
 dtlz4.bound_low = [0.] + [0.]*(dtlz4.dimension-1)
@@ -641,7 +641,7 @@ def dtlz5(ind, n_objs=3):
         else:
             fit.append((1 + gval) * cos(pi / 2.0 * ind[0]) *
                        reduce(lambda x,y: x*y, [cos(theta(a)) for a in ind[1:m-1]], 1) * sin(theta(ind[m-1])))
-    return fit
+    return tuple(fit)
 dtlz5.dimension = 6  # 10
 dtlz5.nadir = [1.5, 1.5, 1.5]
 dtlz5.bound_low = [0.] + [0.]*(dtlz5.dimension-1)
@@ -666,7 +666,7 @@ def dtlz6(ind, n_objs=3):
         else:
             fit.append((1 + gval) * cos(pi / 2.0 * ind[0]) *
                        reduce(lambda x,y: x*y, [cos(theta(a)) for a in ind[1:m-1]], 1) * sin(theta(ind[m-1])))
-    return fit
+    return tuple(fit)
 dtlz6.dimension = 6  # 10
 dtlz6.nadir = [1.5, 1.5, 1.5]
 dtlz6.bound_low = [0.] + [0.]*(dtlz6.dimension-1)
@@ -682,7 +682,7 @@ def dtlz7(ind, n_objs=3):
     gval = 1 + 9.0 / len(ind[n_objs-1:]) * sum([a for a in ind[n_objs-1:]])
     fit = [ind for ind in ind[:n_objs-1]]
     fit.append((1 + gval) * (n_objs - sum([a / (1.0 + gval) * (1 + sin(3 * pi * a)) for a in ind[:n_objs-1]])))
-    return fit
+    return tuple(fit)
 dtlz7.dimension = 6  # 10
 dtlz7.nadir = [15., 15., 15.]
 dtlz7.bound_low = [0.] + [0.]*(dtlz7.dimension-1)
