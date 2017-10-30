@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
                << " --points_in_pareto_front=" << func_uc->_pareto_front.size()
                << " --hyper_volume=" << func_uc->hyper_volume()
                << " --uniformity=" << func_uc->uniformity()
+               << " --stats_file=" << func_uc->_stats_log_filename
                << " --subregions=" << alg->_partition.size()
                << " --duration=" << alg->_duration
                << " --task_id=" << task_id
