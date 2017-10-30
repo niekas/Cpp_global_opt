@@ -354,7 +354,7 @@ public:
             _duration = (end - start) / 1000000.0L;
         };
 
-        if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
+        if (_duration <= _max_duration) {
             _status = "D";
         } else {
             _status = "S";
