@@ -70,6 +70,7 @@ int main(int argc, char* argv[]) {
         alpha = 0.4;
     };
 
+    Function::_filename = string(argv[0]);
     Function* func = get_function(func_name, D);
     FunctionUC* func_uc = new FunctionUC(func);
 

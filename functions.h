@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
+#include <libgen.h>
 #include "python2.6/Python.h"
 
 // #include "utils.h"
@@ -361,18 +362,20 @@ class Function {  // Abstract class to store information specific to a function 
     Function& operator=(const Function& other){};
 public:
     Function() {};
-    Function(int D) {};
+    Function(int D, string filename) {};
 
-    string _name;          // Function name
-    int _D;                // Number of dimensions in variable space
-    int _C;                // Number of objectives
-    vector<double> _lb;    // Lower bound values
-    vector<double> _ub;    // Upper bound values
-    vector<double> _nadir; // Nadir point
+    string _name;            // Function name
+    static string _filename; // Filename, which is running
+    int _D;                  // Number of dimensions in variable space
+    int _C;                  // Number of objectives
+    vector<double> _lb;      // Lower bound values
+    vector<double> _ub;      // Upper bound values
+    vector<double> _nadir;   // Nadir point
 
     virtual vector<double> get_values(vector<double> X) = 0;
     virtual ~Function(){};
 };
+string Function::_filename = "";
 
 
 class FunctionUC {      // Abstract multi-objective function defined over a unite-cube
@@ -393,9 +396,12 @@ public:
         // Clear log files
         stringstream sd;
         sd << _D;
-        _partition_log_filename = ("log/partition_" + _name + "_" + sd.str() + ".txt");
-        _front_log_filename = ("log/front_" + _name + "_" + sd.str() + ".txt");
-        _stats_log_filename = ("log/stats_" + _name + "_" + sd.str() + ".txt");
+        char* filename = strdup(Function::_filename.c_str());
+        char* dir = dirname(filename);
+        // full path to files has to be specified.
+        _partition_log_filename = (string(dir) + "/log/partition_" + _name + "_" + sd.str() + ".txt");
+        _front_log_filename = (string(dir) + "/log/front_" + _name + "_" + sd.str() + ".txt");
+        _stats_log_filename = (string(dir) + "/log/stats_" + _name + "_" + sd.str() + ".txt");
         ofstream log_file;
         log_file.open(_partition_log_filename.c_str());
         log_file.close();
@@ -406,11 +412,11 @@ public:
 
         // Open python functions
         Py_Initialize();
-        PyRun_SimpleString("import sys; sys.path.append('.')");
+        PyRun_SimpleString(("import sys; import os; sys.path.append(os.path.dirname('"+ Function::_filename + "'))").c_str());
         _show_pareto_front_string = PyString_FromString((char*)"log.show_pareto_front");
         _show_pareto_front = PyImport_Import(_show_pareto_front_string);
         _get_hv = PyObject_GetAttrString(_show_pareto_front, (char*)"get_hv");
-        _hv_args = PyTuple_Pack(1,PyString_FromString((char*)_front_log_filename.c_str()));
+        _hv_args = PyTuple_Pack(1, PyString_FromString((char*)_front_log_filename.c_str()));
     };
 
     string _name;
@@ -433,6 +439,14 @@ public:
     PyObject* _show_pareto_front;
     PyObject* _get_hv;
     PyObject* _hv_args;
+
+    // char* get_CWD() {
+    //     char cwd[1024];
+    //     if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    //         return strdup(cwd);
+    //     };
+    //     return 0;
+    // };
 
     //// Evaluation methods
     vector<double> transform_from_uc(double* X_uc) {
@@ -688,7 +702,8 @@ class GeneticFunction: public Function {
 public:
     GeneticFunction() {
         Py_Initialize();
-        PyRun_SimpleString("import sys; sys.path.append('.')");
+        PyRun_SimpleString(("import sys; import os; sys.path.append(os.path.dirname('"+ Function::_filename + "'))").c_str());
+        // PyRun_SimpleString("import sys; import os; sys.path.append(os.path.dirname(os.path.abspath('__file__')))");
         _problem_module_string = PyString_FromString((char*)"mo_problems");
         _problem_module  = PyImport_Import(_problem_module_string);
     };
