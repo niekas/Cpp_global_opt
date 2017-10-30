@@ -544,12 +544,13 @@ public:
         return uniformity;
     };
 
-    double log_hyper_volume() {
+    double log_stats() {
         double hv = hyper_volume();
+        double uni = uniformity();
         ofstream log_file;
         log_file.open("log/hyper_volume.txt", ios::app);
         log_file.precision(17);
-        log_file << _evaluations << " " << hv <<  endl;
+        log_file << _evaluations << " " << hv << " " << uni << endl;
         log_file.close();
         return hv;
     };

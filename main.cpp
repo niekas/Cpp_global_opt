@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         alpha = 0.4;
     };
 
-    Function* func = get_function(func_name, 3);
+    Function* func = get_function(func_name, 6);
     FunctionUC* func_uc = new FunctionUC(func);
 
     Libre* alg = new Libre(max_calls, max_duration, alpha);

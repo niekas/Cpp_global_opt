@@ -313,7 +313,7 @@ public:
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
         Simplex::update_tolerance_values(_partition, _func);
 
-        while (_func->_evaluations < 1200) {   // (!_func->is_accurate_enough()) {
+        while (_func->_evaluations < _max_calls) {   // (!_func->is_accurate_enough()) {
                                               // Should be accurate enough:
                                               // can be defined based on tolerance.
                                               // need to define methodology for experiments comparing genetic algorithms.
@@ -321,7 +321,7 @@ public:
             /////////////////////////////////////////////
             ////    Different stopping conditions    ////
             /////////////////////////////////////////////
-            double hv = func->log_hyper_volume();
+            double hv = func->log_stats();
 
             // Select simplices to divide
             vector<Simplex*> simplices_to_divide;
@@ -353,8 +353,6 @@ public:
             timestamp_t end = get_timestamp();
             _duration = (end - start) / 1000000.0L;
         };
-
-        // Metrics should be added and tested (compare results with Fortran implementation).
 
         if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
             _status = "D";
