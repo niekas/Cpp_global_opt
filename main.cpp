@@ -26,11 +26,13 @@ int main(int argc, char* argv[]) {
         {"callback", required_argument, 0, 'b'},
         {"max_calls", optional_argument, 0, 'i'},
         {"max_duration", optional_argument, 0, 'd'},
+        {"d", optional_argument, 0, 'l'},
     };
 
     char* func_name = {'\0'};
     double alpha = numeric_limits<double>::max();
     int task_id;
+    int D = 3;
     char* callback = {'\0'};
     int max_calls = 100000;
     int max_duration = 4*3600;
@@ -38,7 +40,7 @@ int main(int argc, char* argv[]) {
     int opt_id;
     int iarg = 0;
     while(iarg != -1) {
-        iarg = getopt_long(argc, argv, "antbdi", longopts, &opt_id);
+        iarg = getopt_long(argc, argv, "antbdil", longopts, &opt_id);
         switch (iarg) {
             case 'n':
                 func_name = strdup(optarg);
@@ -58,6 +60,9 @@ int main(int argc, char* argv[]) {
             case 'i':
                 max_calls = strtoul(optarg, 0, 0);
                 break;
+            case 'l':
+                D = strtoul(optarg, 0, 0);
+                break;
         };
     };
 
@@ -65,7 +70,7 @@ int main(int argc, char* argv[]) {
         alpha = 0.4;
     };
 
-    Function* func = get_function(func_name, 3);
+    Function* func = get_function(func_name, D);
     FunctionUC* func_uc = new FunctionUC(func);
 
     Libre* alg = new Libre(max_calls, max_duration, alpha);
