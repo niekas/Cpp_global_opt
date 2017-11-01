@@ -26,6 +26,17 @@ double l2norm(vector<double> p1, vector<double> p2) {
     return sqrt(squared_sum);
 };
 
+double gtl2norm(vector<double> p1, vector<double> p2) {
+    // Finds Positive distance between two points
+    double squared_sum = 0;
+    for (int i=0; i < p1.size(); i++){
+        if ((p1[i] - p2[i]) > 0) {
+            squared_sum += pow(p1[i] - p2[i], 2);
+        };
+    };
+    return sqrt(squared_sum);
+};
+
 
 typedef unsigned long long timestamp_t;
 static timestamp_t get_timestamp() {
@@ -62,6 +73,7 @@ public:
     vector<double> _min_lbs;     // Minimum of the lower bound over simplex found using vertex with the lowest value
     double _tolerance;
     bool _should_tolerance_be_updated;
+    Point* _pf_tolerance_point;
 
     static double alpha;              // Coeficient of search globality
     static vector<double> glob_Ls;             // Globally known biggest min L
@@ -252,34 +264,42 @@ public:
     };
 
     double find_tolerance(vector<Point*> pareto_front) {
+        // Find R
         vector<double> R;
         for (int k=0; k < _C; k++) {
             R.push_back(_min_lbs[k]);
         };
 
+        // Is R dominated?
         bool r_dominated = false;
-        double min_dist = numeric_limits<double>::max();
-        double dist;
-
-        for (int j=0; j < pareto_front.size(); j++) {
-            if (dominates(pareto_front[j]->_values, R) == true) {
+        for (int i=0; i < pareto_front.size(); i++) {
+            if (dominates(pareto_front[i]->_values, R) == true) {
                 r_dominated = true;
             };
-            dist = l2norm(pareto_front[j]->_values, R);
-            // gtl2norm should be calculated differently: when m is dominated gtl2norm should be negative value how much y improves m
+        };
 
-            if (min_dist > dist) {
-                min_dist = dist;
+        double min_dist = numeric_limits<double>::max();
+        double dist;
+        if (r_dominated == true) {
+            // Find smallest gtl2norm, when R is dominated.
+            for (int i=0; i < pareto_front.size(); i++) {
+                dist = gtl2norm(R, pareto_front[i]->_values);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    _pf_tolerance_point = pareto_front[i];
+                };
+            };
+            min_dist = -1 * min_dist;
+        } else {
+            // Find smallest gtl2norm, when R is not dominated.
+            for (int i=0; i < pareto_front.size(); i++) {
+                dist = gtl2norm(pareto_front[i]->_values, R);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    _pf_tolerance_point = pareto_front[i];
+                };
             };
         };
-
-        if (r_dominated) {
-            min_dist *= -1.;
-        };
-
-        // Todo: should test this part.
-        //    Print R
-        //    Print pareto_point and check if they are dominated
         return -min_dist;    // minus because in convex_hull we need to find max tolerance
     };
 
