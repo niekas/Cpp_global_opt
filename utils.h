@@ -1,6 +1,6 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
 #ifndef SIMPLEX_H
-#define SIMPLEX_H 
+#define SIMPLEX_H
 #include <fstream>
 #include <sstream>
 #include <sys/time.h>
@@ -8,7 +8,7 @@
 using namespace std;
 
 
-double l2norm(Point* p1, Point* p2) {  
+double l2norm(Point* p1, Point* p2) {
     // Finds Euclidean distance between two points
     double squared_sum = 0;
     for (int i=0; i < p1->size(); i++){
@@ -29,7 +29,7 @@ class Simplex {
     Simplex(const Simplex& other){}
     Simplex& operator=(const Simplex& other){}
 public:
-    Simplex() { 
+    Simplex() {
         _D = 0;
         _le_v1 = 0;
         _le_v2 = 0;
@@ -59,8 +59,9 @@ public:
     bool _should_be_divided;  // Should this simplex be divided in next iteration
     bool _should_lb_mins_be_updated;   // Should the minimums of Lipschitz lower bound be updated
 
-    Point* _min_vert;   // Vertex with lowest function value 
-    
+    Point* _min_vert;   // Vertex with lowest function value
+    Point* _max_vert;   // Vertex with lowest function value
+
     void print(){
         cout << " Simplex   diam:  " << _diameter << "   tol:  " << _min_lb;
         cout << "   min_L:  " << _min_L <<  endl;
@@ -74,7 +75,7 @@ public:
                               Function* funcs,
                               string label="Partition:",
                               int iteration=0) {
-       ofstream log_file; 
+       ofstream log_file;
        log_file.open("log/partition.txt");
        log_file.close();
        log_file.open("log/partition.txt", ios::app);
@@ -109,7 +110,7 @@ public:
 
     void init_parameters(Function* func) {   // Called when all verts have been added
         _D = _verts.size() - 1;
-        
+
         // Sorts vertexes ascending by their function value
         sort(_verts.begin(), _verts.end(), Point::ascending_value);
 
@@ -118,7 +119,7 @@ public:
         for (int a=0; a < _verts.size(); a++) {
             for (int b=0; b < _verts.size(); b++){
                 if (b > a) {
-                    edge_length = l2norm(_verts[a], _verts[b]); 
+                    edge_length = l2norm(_verts[a], _verts[b]);
                     if (edge_length > _diameter) {
                         _diameter = edge_length;
                         _le_v1 = _verts[a];
@@ -126,7 +127,7 @@ public:
                     };
                 };
             };
-        }; 
+        };
 
         // Find minimum L for ths simplex
         _min_L = find_simplex_min_L();
@@ -143,6 +144,7 @@ public:
 
         // Find vertex with minimum function value
         _min_vert = _verts[0];
+        _max_vert = _verts[_verts.size()-1];
         for (int i=0; i < _verts.size(); i++) {
             if (_verts[i]->_value < _min_vert->_value) {
                 _min_vert = _verts[i];
@@ -150,9 +152,10 @@ public:
         };
     };
 
-    double find_min_vert_lb_min(Simplex* simpl, double L) { 
+    double find_min_vert_lb_min(Simplex* simpl, double L) {
         // Finds minimum of lower bound, which is constructed from the vertex with lowest function value
-        return _min_vert->_value - L * simpl->_diameter;
+        // return _min_vert->_value - L * simpl->_diameter;
+        return _max_vert->_value - L * simpl->_diameter;
     };
 
     double find_simplex_min_L() {
@@ -202,7 +205,7 @@ public:
             _verts[i]->_simplices.erase(remove(_verts[i]->_simplices.begin(), _verts[i]->_simplices.end(), this), _verts[i]->_simplices.end());
         };
         _verts.clear();
-    };  
+    };
 };
 bool Simplex::glob_L_was_updated = false;
 double Simplex::glob_L = numeric_limits<double>::max();
@@ -221,7 +224,7 @@ void Simplex::update_min_lb_values(vector<Simplex*> simpls, Function* func) {
 
 
 double Determinant(double **a, int n) {
-    // Based on http://paulbourke.net/miscellaneous/determinant/ 
+    // Based on http://paulbourke.net/miscellaneous/determinant/
     int i, j, j1, j2;
     double det = 0;
     double **m = NULL;
