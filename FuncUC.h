@@ -1,6 +1,6 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
 #ifndef FUNCTIONS_H
-#define FUNCTIONS_H 
+#define FUNCTIONS_H
 #include <vector>
 #include <iostream>
 #include <algorithm>
@@ -36,10 +36,10 @@ public:
     };
 
     int _D;          // Dimension of variable space
-    double* _X;      // Coordinates in normalised [0,1]^n space  
+    double* _X;      // Coordinates in normalised [0,1]^n space
     double _value;   // Objective function value
     vector<Simplex*> _simplices;  // Simplices, which have this point as vertex
-         
+
     void add_value(double value) {
         _value = value;
     };
@@ -69,13 +69,13 @@ public:
 
 
 // Binary balancing tree (or simply linked list) for storing points
-// It returns cached point if a point with the same coordinates is added 
+// It returns cached point if a point with the same coordinates is added
 class PointTree;
 
 class PointTreeNode {
     PointTreeNode(const PointTreeNode& other){}
     PointTreeNode& operator=(const PointTreeNode& other){}
-public:                
+public:
     PointTreeNode(double value=numeric_limits<double>::max()){
         _height = 1;
         _value = value;
@@ -120,7 +120,7 @@ public:
     void update_height(PointTreeNode* node) {
         int lh = 0;
         int rh = 0;
-        if (node->_left != 0) { lh = node->_left->_height; }; 
+        if (node->_left != 0) { lh = node->_left->_height; };
         if (node->_right != 0) { rh = node->_right->_height; };
         if (lh > rh) {
             node->_height = lh + 1;
@@ -135,7 +135,7 @@ public:
 
     void left_right_rebalance(PointTreeNode* node) {
         PointTreeNode* diatteched_node;
-        // node left right  <-  node left right left 
+        // node left right  <-  node left right left
         diatteched_node = node->_left->_right;
         node->_left->_right = node->_left->_right->_left;
         if (node->_left->_right != 0) { node->_left->_right->_parent = node->_left; };
@@ -154,7 +154,7 @@ public:
         PointTreeNode* diatteched;
         diatteched = node->_left;
         node->_left = node->_left->_right;
-        if (node->_left != 0) { node->_left->_parent = node; };  
+        if (node->_left != 0) { node->_left->_parent = node; };
         diatteched->_parent = node->_parent;
         if (node->_parent != 0) {
             if (node->_parent->_left == node) {
@@ -173,7 +173,7 @@ public:
     };
     void right_left_rebalance(PointTreeNode* node) {
         PointTreeNode* diatteched_node;
-        // node left right  <-  node left right left 
+        // node left right  <-  node left right left
         diatteched_node = node->_right->_left;
         node->_right->_left = node->_right->_left->_right;
         if (node->_right->_left != 0) { node->_right->_left->_parent = node->_right; };
@@ -193,7 +193,7 @@ public:
         diatteched = node->_right;
         node->_right = node->_right->_left;
         if (node->_right != 0) { node->_right->_parent = node; };
-        diatteched->_parent = node->_parent;                       
+        diatteched->_parent = node->_parent;
         if (node->_parent != 0) {
             if (node->_parent->_left == node) {
                 node->_parent->_left = diatteched;
@@ -266,7 +266,7 @@ public:
             node->_subtree = new PointTree(_dim + 1);
         };
         Point* found_point = node->_subtree->add(point);  // Get or insert point to the subtree
-        if (found_point != 0) {  // We got point so return it 
+        if (found_point != 0) {  // We got point so return it
             return found_point;
         } else {
             return 0;  // We inserted point
@@ -354,7 +354,7 @@ public:
         };
     };
 
-    Point* get(double *c, int D){  
+    Point* get(double *c, int D){
         // Returns a point with objective function value (the point may be from cache)
         Point* p = new Point(c, D);
         Point* cached_point = _points->add(p);
@@ -368,7 +368,7 @@ public:
         };
     };
 
-    Point* get(Point* p) {   
+    Point* get(Point* p) {
         // Returns a point with objective function value (the point may be from cache)
         Point* cached_point = _points->add(p);
         if (cached_point) {   // Value at this point is already known
@@ -417,17 +417,17 @@ public:
         int nr_of_new_points = _new_points.size();
         for (int j=0; j < nr_of_new_points; j++) {
             // Pop one of the new points
-            Point* p = _new_points.back();      
+            Point* p = _new_points.back();
             _new_points.pop_back();
 
             // Convert that point object to a vector
-            vector<double> point_vector;        
+            vector<double> point_vector;
             for (int i=0; i < p->_D; i++) {
                 point_vector.push_back(p->_X[i]);
             };
 
             // Check stopping condition
-            if (should_stop(point_vector) == true) {  
+            if (should_stop(point_vector) == true) {
                 return true;
             };
         };
