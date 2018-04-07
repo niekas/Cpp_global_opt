@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/time.h>
-#include "Conte.h"
+#include "PropConte.h"
 
 using namespace std;
 
@@ -171,7 +171,7 @@ public:
 
     double find_accurate_lb_min(Simplex* simpl, double L) {
         int crit_id = 0;
-        Conte* alg = new Conte(simpl->_verts, L);
+        PropConte* alg = new PropConte(simpl->_verts, L, simpl->_diameter);
         Point* lb_point = alg->minimize();
         delete alg;
         return lb_point->_value;

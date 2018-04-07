@@ -315,7 +315,7 @@ public:
             //     exit(0);
             // };
 
-            cout << "Iteration: " << _iteration << " evals:" << _func->_evaluations << endl;
+            // cout << "Iteration: " << _iteration << " evals:" << _func->_evaluations << endl;
 
             // Divide seletected simplices
             vector<Simplex*> new_simplices = divide_simplices(simplices_to_divide);
