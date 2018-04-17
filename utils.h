@@ -52,6 +52,7 @@ public:
 
     static double alpha;              // Coeficient of search globality
     static double glob_L;             // Globally known biggest min L
+    static double max_diameter;
     static bool glob_L_was_updated;
 
     vector<Point*> _verts;    // Vertices of this simplex (points with coordinates and values)
@@ -206,6 +207,7 @@ public:
 };
 bool Simplex::glob_L_was_updated = false;
 double Simplex::glob_L = numeric_limits<double>::max();
+double Simplex::max_diameter = numeric_limits<double>::max();
 double Simplex::alpha = numeric_limits<double>::max();
 
 
@@ -222,7 +224,11 @@ void Simplex::update_min_lb_values(vector<Simplex*> simpls, Function* func) {
                 };
             };
             // simpls[sid]->_min_lb = simpls[sid]->find_min_vert_lb_min(simpls[sid], Simplex::glob_L);
-            simpls[sid]->_min_lb = simpls[sid]->find_min_vert_lb_min(simpls[sid], local_L);
+            double mixed_L = Simplex::glob_L * simpls[sid]->_diameter/Simplex::max_diameter;
+            if (local_L > mixed_L) {
+                mixed_L = local_L;
+            };
+            simpls[sid]->_min_lb = simpls[sid]->find_min_vert_lb_min(simpls[sid], mixed_L);
             simpls[sid]->_should_lb_mins_be_updated = false;
         };
     };

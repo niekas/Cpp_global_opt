@@ -1,7 +1,7 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
 #ifndef ASIMPL_H
-#define ASIMPL_H 
-#include <math.h> 
+#define ASIMPL_H
+#include <math.h>
 #include "utils.h"
 #include <ctime>
 #include <iostream>
@@ -22,7 +22,7 @@ public:
         _iteration = 0;
         Simplex::glob_L = numeric_limits<double>::max();    // Reset glob_L value
         Simplex::alpha = alpha;    // Reset glob_L value
-        ofstream log_file; 
+        ofstream log_file;
         log_file.open("log/partition.txt");
         log_file.close();
 
@@ -69,8 +69,8 @@ public:
             Simplex* simpl = new Simplex();
             for (int i=0; i < n + 1; i++){
                 Point* tmp_point = new Point(triangle[i], n);
-                
-                Point* point = _func->get(tmp_point); 
+
+                Point* point = _func->get(tmp_point);
                 if (tmp_point != point) {
                     delete tmp_point;
                 };
@@ -147,6 +147,7 @@ public:
         // Sort simplices by their diameter
         vector<Simplex*> sorted_partition = _partition;
         sort(sorted_partition.begin(), sorted_partition.end(), Simplex::ascending_diameter);
+        Simplex::max_diameter = sorted_partition[sorted_partition.size()-1]->_diameter;
         double f_min = _func->_f_min;
 
         // Find simplices with best lb_min values and unique diameters
@@ -222,10 +223,10 @@ public:
         // Remove simplices which were not selected and should not be divided
         selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
 
-        // Select all simplices which have best min_lb for its size 
+        // Select all simplices which have best min_lb for its size
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
+                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&
                     (sorted_partition[i]->_min_lb == selected[j]->_min_lb)) {
                     selected_simplices.push_back(sorted_partition[i]);
                 };
@@ -244,7 +245,7 @@ public:
             c[i] = (simplex->_le_v1->_X[i] + simplex->_le_v2->_X[i]) / 2.;
         };
         Point* tmp_point = new Point(c, n);
-        Point* middle_point = _func->get(tmp_point); 
+        Point* middle_point = _func->get(tmp_point);
         if (tmp_point != middle_point) {
             delete tmp_point;
         };
@@ -293,6 +294,7 @@ public:
         _func = func;
         _partition = partition_unit_cube_into_simplices_combinatoricly(_func->_D);
         sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
+        Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
         Simplex::update_min_lb_values(_partition, _func);
 
         while (!_func->is_accurate_enough()) {
@@ -330,6 +332,7 @@ public:
             };
 
             sort(_partition.begin(), _partition.end(), Simplex::ascending_diameter);
+            Simplex::max_diameter = _partition[_partition.size()-1]->_diameter;
             Simplex::update_min_lb_values(_partition, _func);
             _iteration += 1;
 
@@ -338,7 +341,7 @@ public:
         };
 
         if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
-            _status = "D"; 
+            _status = "D";
         } else {
             _status = "S";
         };
