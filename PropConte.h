@@ -30,13 +30,21 @@ public:
         _D = _verts.size() - 1;
         _V = _verts.size();
         _diameter = diameter;
-        _min_step_size = 1. / 200;
-        // _steps = ceil(_diameter / (sqrt(_D) * _min_step_size));
-        _steps = ceil(_diameter / _min_step_size);
-        if (_steps < _V*2) {
-            _steps = _V*2;
+
+        _step_size = _diameter / 10.;
+        if (_step_size > 0.01) {
+            _step_size = 0.01;
         };
+        _steps = ceil(_diameter / _step_size);
         _step_size = 1. / _steps;
+
+        // _min_step_size = 1. / 200;
+        // // _steps = ceil(_diameter / (sqrt(_D) * _min_step_size));
+        // _steps = ceil(_diameter / _min_step_size);
+        // if (_steps < _V*2) {
+        //     _steps = _V*2;
+        // };
+        // _step_size = 1. / _steps;
     };
     vector<Point*> _verts;   // Simplex vertexes
     double _L;
