@@ -1,7 +1,7 @@
 /* Copyright Albertas Gimbutas 2017, all rights reserved */
 #ifndef ASIMPL_H
-#define ASIMPL_H 
-#include <math.h> 
+#define ASIMPL_H
+#include <math.h>
 #include "utils.h"
 #include <ctime>
 #include <iostream>
@@ -22,7 +22,7 @@ public:
         _iteration = 0;
         Simplex::glob_L = numeric_limits<double>::max();    // Reset glob_L value
         Simplex::alpha = alpha;    // Reset glob_L value
-        ofstream log_file; 
+        ofstream log_file;
         log_file.open("log/partition.txt");
         log_file.close();
 
@@ -69,8 +69,8 @@ public:
             Simplex* simpl = new Simplex();
             for (int i=0; i < n + 1; i++){
                 Point* tmp_point = new Point(triangle[i], n);
-                
-                Point* point = _func->get(tmp_point); 
+
+                Point* point = _func->get(tmp_point);
                 if (tmp_point != point) {
                     delete tmp_point;
                 };
@@ -189,31 +189,47 @@ public:
 
         // Find strict pareto optimal solutions using convex-hull strategy
         vector<Simplex*> selected;
-        if (min_lb_min_simplex == best_for_size[best_for_size.size()-1]) {
-            selected.push_back(min_lb_min_simplex);
-        } else {
-            if ((best_for_size.size() > 2) && (min_lb_min_simplex != best_for_size[best_for_size.size()-1])) {
-                vector<Simplex*> simplices_below_line;
-                double a1 = min_lb_min_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
-                double b1 = min_lb_min_simplex->_min_lb;
-                double a2 = best_for_size[best_for_size.size()-1]->_diameter;
-                double b2 = best_for_size[best_for_size.size()-1]->_min_lb;
 
-                double slope = (b2 - b1)/(a2 - a1);
-                double bias = b1 - slope * a1;
-
-                for (int i=0; i < best_for_size.size(); i++) {
-                    if (best_for_size[i]->_diameter >= a1) {  // Dont take into consideration smallel diameter simplices
-                        if (best_for_size[i]->_min_lb < slope*best_for_size[i]->_diameter + bias +1e-12) {
-                            simplices_below_line.push_back(best_for_size[i]);
-                        };
-                    };
+        for (int i=0; i < best_for_size.size(); i++) {
+            bool found_better = false;
+            for (int j=0; j < best_for_size.size(); j++) {
+                if ((best_for_size[i]->_diameter < best_for_size[j]->_diameter) and
+                    (best_for_size[i]->_min_lb > best_for_size[j]->_min_lb)) {
+                    found_better = true;
                 };
-                selected = convex_hull(simplices_below_line);
-            } else {
-                selected = best_for_size;
+
+            };
+            if (found_better == false) {
+                selected.push_back(best_for_size[i]);
             };
         };
+
+
+        // if (min_lb_min_simplex == best_for_size[best_for_size.size()-1]) {
+        //     selected.push_back(min_lb_min_simplex);
+        // } else {
+        //     if ((best_for_size.size() > 2) && (min_lb_min_simplex != best_for_size[best_for_size.size()-1])) {
+        //         vector<Simplex*> simplices_below_line;
+        //         double a1 = min_lb_min_simplex->_diameter;  // Should be like this based on Direct Matlab implementation
+        //         double b1 = min_lb_min_simplex->_min_lb;
+        //         double a2 = best_for_size[best_for_size.size()-1]->_diameter;
+        //         double b2 = best_for_size[best_for_size.size()-1]->_min_lb;
+        //
+        //         double slope = (b2 - b1)/(a2 - a1);
+        //         double bias = b1 - slope * a1;
+        //
+        //         for (int i=0; i < best_for_size.size(); i++) {
+        //             if (best_for_size[i]->_diameter >= a1) {  // Dont take into consideration smallel diameter simplices
+        //                 if (best_for_size[i]->_min_lb < slope*best_for_size[i]->_diameter + bias +1e-12) {
+        //                     simplices_below_line.push_back(best_for_size[i]);
+        //                 };
+        //             };
+        //         };
+        //         selected = convex_hull(simplices_below_line);
+        //     } else {
+        //         selected = best_for_size;
+        //     };
+        // };
 
         for (int i=0; i < selected.size(); i++) {
             selected[i]->_should_be_divided = true;
@@ -222,10 +238,10 @@ public:
         // Remove simplices which were not selected and should not be divided
         selected.erase(remove_if(selected.begin(), selected.end(), Simplex::wont_be_divided), selected.end());
 
-        // Select all simplices which have best min_lb for its size 
+        // Select all simplices which have best min_lb for its size
         for (int i=0; i < sorted_partition.size(); i++) {
             for (int j=0; j < selected.size(); j++) {
-                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) && 
+                if ((sorted_partition[i]->_diameter == selected[j]->_diameter) &&
                     (sorted_partition[i]->_min_lb == selected[j]->_min_lb)) {
                     selected_simplices.push_back(sorted_partition[i]);
                 };
@@ -244,7 +260,7 @@ public:
             c[i] = (simplex->_le_v1->_X[i] + simplex->_le_v2->_X[i]) / 2.;
         };
         Point* tmp_point = new Point(c, n);
-        Point* middle_point = _func->get(tmp_point); 
+        Point* middle_point = _func->get(tmp_point);
         if (tmp_point != middle_point) {
             delete tmp_point;
         };
@@ -338,7 +354,7 @@ public:
         };
 
         if ((_func->_evaluations <= _max_calls) && (_duration <= _max_duration)) {
-            _status = "D"; 
+            _status = "D";
         } else {
             _status = "S";
         };
